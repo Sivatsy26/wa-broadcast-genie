@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
+import { DateRange } from 'react-day-picker';
+import { format, isWithinInterval, parseISO } from 'date-fns';
 import ConversationList from '@/components/conversations/ConversationList';
 import MessageList from '@/components/conversations/MessageList';
 import MessageInput from '@/components/conversations/MessageInput';
@@ -7,7 +9,6 @@ import ContactInfoSidebar from '@/components/conversations/ContactInfoSidebar';
 import ConversationHeader from '@/components/conversations/ConversationHeader';
 import NoConversation from '@/components/conversations/NoConversation';
 import { Conversation, Message } from '@/types/conversation';
-import { FileText, Mic } from 'lucide-react';
 
 const conversations: Conversation[] = [
   {
@@ -234,6 +235,9 @@ const Conversations = () => {
   const [conversationList, setConversationList] = useState<Conversation[]>(conversations);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [assigneeFilter, setAssigneeFilter] = useState<string>('');
+  const [tagFilter, setTagFilter] = useState<string>('');
   const [localMessages, setLocalMessages] = useState<Message[]>(messages);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -261,8 +265,33 @@ const Conversations = () => {
       );
     }
     
+    if (dateRange?.from) {
+      filtered = filtered.filter(convo => {
+        const messageDate = parseISO(convo.lastMessage.timestamp);
+        
+        if (dateRange.to) {
+          return isWithinInterval(messageDate, {
+            start: dateRange.from,
+            end: dateRange.to
+          });
+        }
+        
+        return messageDate >= dateRange.from;
+      });
+    }
+    
+    if (assigneeFilter) {
+      filtered = filtered.filter(convo => convo.assignedTo === assigneeFilter);
+    }
+    
+    if (tagFilter) {
+      filtered = filtered.filter(convo => 
+        convo.tags?.includes(tagFilter)
+      );
+    }
+    
     setConversationList(filtered);
-  }, [statusFilter, searchTerm]);
+  }, [statusFilter, searchTerm, dateRange, assigneeFilter, tagFilter]);
 
   const handleSendMessage = (content: string, file: File | null) => {
     const newMessageId = `new-${Date.now()}`;
@@ -388,6 +417,12 @@ const Conversations = () => {
           setStatusFilter={setStatusFilter}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          assigneeFilter={assigneeFilter}
+          setAssigneeFilter={setAssigneeFilter}
+          tagFilter={tagFilter}
+          setTagFilter={setTagFilter}
         />
         
         {activeConversation ? (

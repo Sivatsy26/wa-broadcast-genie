@@ -13,6 +13,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import {
   Search,
@@ -21,8 +25,14 @@ import {
   RefreshCw,
   CheckCircle,
   Clock,
+  SlidersHorizontal,
+  User,
+  X,
+  Tag,
 } from 'lucide-react';
 import { Conversation } from '@/types/conversation';
+import { DateRange } from 'react-day-picker';
+import DateRangePicker from './DateRangePicker';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -32,6 +42,12 @@ interface ConversationListProps {
   setStatusFilter: (status: string) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  dateRange?: DateRange;
+  setDateRange?: (range: DateRange | undefined) => void;
+  assigneeFilter?: string;
+  setAssigneeFilter?: (assignee: string) => void;
+  tagFilter?: string;
+  setTagFilter?: (tag: string) => void;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({
@@ -41,7 +57,13 @@ const ConversationList: React.FC<ConversationListProps> = ({
   statusFilter,
   setStatusFilter,
   searchTerm,
-  setSearchTerm
+  setSearchTerm,
+  dateRange,
+  setDateRange,
+  assigneeFilter,
+  setAssigneeFilter,
+  tagFilter,
+  setTagFilter
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -72,6 +94,27 @@ const ConversationList: React.FC<ConversationListProps> = ({
         return null;
     }
   };
+  
+  // Get unique assignees and tags for filter options
+  const assignees = Array.from(new Set(conversations.filter(c => c.assignedTo).map(c => c.assignedTo as string)));
+  const tags = Array.from(new Set(conversations.flatMap(c => c.tags || [])));
+  
+  // Count active filters
+  const activeFilterCount = [
+    statusFilter !== 'all',
+    !!dateRange?.from,
+    !!assigneeFilter,
+    !!tagFilter,
+  ].filter(Boolean).length;
+
+  // Reset all filters function
+  const resetAllFilters = () => {
+    setStatusFilter('all');
+    setDateRange && setDateRange(undefined);
+    setAssigneeFilter && setAssigneeFilter('');
+    setTagFilter && setTagFilter('');
+    setSearchTerm('');
+  };
 
   return (
     <div className="w-1/3 flex flex-col bg-white rounded-lg border shadow-sm overflow-hidden">
@@ -85,46 +128,193 @@ const ConversationList: React.FC<ConversationListProps> = ({
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex mt-3 gap-1">
+        <div className="flex mt-3 gap-1 flex-wrap">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="text-xs">
-                <Filter className="h-3 w-3 mr-1" />
-                {statusFilter === 'all' ? 'All Statuses' : `Status: ${statusFilter}`}
+                <SlidersHorizontal className="h-3 w-3 mr-1" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-[10px] h-4 min-w-4 px-1">
+                    {activeFilterCount}
+                  </Badge>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+              <DropdownMenuLabel>Conversation Filters</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                <DropdownMenuRadioItem value="all">All Conversations</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="new">
-                  <MessageSquare className="h-4 w-4 text-blue-600 mr-2" />
-                  New
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="active">
-                  <RefreshCw className="h-4 w-4 text-green-600 mr-2" />
-                  Active
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="resolved">
-                  <CheckCircle className="h-4 w-4 text-purple-600 mr-2" />
-                  Resolved
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="waiting">
-                  <Clock className="h-4 w-4 text-amber-600 mr-2" />
-                  Waiting
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
+              
+              {/* Status Filter */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Status: {statusFilter === 'all' ? 'All' : statusFilter}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                      <DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="new">
+                        <MessageSquare className="h-4 w-4 text-blue-600 mr-2" />
+                        New
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="active">
+                        <RefreshCw className="h-4 w-4 text-green-600 mr-2" />
+                        Active
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="resolved">
+                        <CheckCircle className="h-4 w-4 text-purple-600 mr-2" />
+                        Resolved
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="waiting">
+                        <Clock className="h-4 w-4 text-amber-600 mr-2" />
+                        Waiting
+                      </DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              
+              {/* Assignee Filter */}
+              {setAssigneeFilter && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <User className="h-4 w-4 mr-2" />
+                    Assignee: {assigneeFilter ? assigneeFilter : 'All'}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => setAssigneeFilter('')}>
+                        All Assignees
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {assignees.map((assignee) => (
+                        <DropdownMenuItem 
+                          key={assignee} 
+                          onClick={() => setAssigneeFilter(assignee)}
+                        >
+                          {assignee}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              )}
+              
+              {/* Tag Filter */}
+              {setTagFilter && tags.length > 0 && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Tag className="h-4 w-4 mr-2" />
+                    Tag: {tagFilter ? tagFilter : 'All'}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => setTagFilter('')}>
+                        All Tags
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {tags.map((tag) => (
+                        <DropdownMenuItem 
+                          key={tag} 
+                          onClick={() => setTagFilter(tag)}
+                        >
+                          {tag}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              )}
+              
+              {/* Date Range Picker */}
+              {setDateRange && (
+                <DropdownMenuItem>
+                  <div className="w-full">
+                    <DateRangePicker 
+                      dateRange={dateRange} 
+                      onDateRangeChange={setDateRange}
+                      onReset={() => setDateRange(undefined)}
+                    />
+                  </div>
+                </DropdownMenuItem>
+              )}
+              
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={resetAllFilters}>
+                <X className="h-4 w-4 mr-2" />
+                Reset all filters
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="sm" className="text-xs">
-            All Conversations
+          
+          <Button 
+            variant={statusFilter === 'all' ? "secondary" : "outline"} 
+            size="sm" 
+            className="text-xs"
+            onClick={() => setStatusFilter('all')}
+          >
+            All
           </Button>
+          <Button 
+            variant={statusFilter === 'new' ? "secondary" : "outline"}
+            size="sm" 
+            className="text-xs"
+            onClick={() => setStatusFilter('new')}
+          >
+            <MessageSquare className="h-3 w-3 mr-1 text-blue-600" />
+            New
+          </Button>
+          <Button 
+            variant={statusFilter === 'active' ? "secondary" : "outline"}
+            size="sm" 
+            className="text-xs"
+            onClick={() => setStatusFilter('active')}
+          >
+            <RefreshCw className="h-3 w-3 mr-1 text-green-600" />
+            Active
+          </Button>
+          
           <Button variant="outline" size="sm" className="text-xs">
             <Badge className="h-4 w-4 px-1 text-[10px] bg-blue-500">3</Badge>
             <span className="ml-1">Unread</span>
           </Button>
         </div>
+        
+        {/* Show active filters */}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {statusFilter !== 'all' && (
+              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                Status: {statusFilter}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setStatusFilter('all')} />
+              </Badge>
+            )}
+            
+            {dateRange?.from && (
+              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                Date: {format(dateRange.from, "MMM d")} 
+                {dateRange.to && ` - ${format(dateRange.to, "MMM d")}`}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setDateRange && setDateRange(undefined)} />
+              </Badge>
+            )}
+            
+            {assigneeFilter && (
+              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                Assignee: {assigneeFilter}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setAssigneeFilter && setAssigneeFilter('')} />
+              </Badge>
+            )}
+            
+            {tagFilter && (
+              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                Tag: {tagFilter}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setTagFilter && setTagFilter('')} />
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
       
       <div className="flex-1 overflow-auto">
@@ -199,10 +389,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
             <p className="text-muted-foreground">No conversations found with the current filters</p>
             <Button 
               variant="link" 
-              onClick={() => {
-                setStatusFilter('all');
-                setSearchTerm('');
-              }}
+              onClick={resetAllFilters}
             >
               Clear filters
             </Button>

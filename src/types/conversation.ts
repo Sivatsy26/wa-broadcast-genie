@@ -16,6 +16,7 @@ export interface Conversation {
   assignedTo?: string;
   tags?: string[];
   status: 'new' | 'active' | 'resolved' | 'waiting';
+  createdAt?: string; // Adding this for date filtering
 }
 
 export interface Message {
