@@ -11,6 +11,12 @@ import WhatsAppAccounts from "./pages/WhatsAppAccounts";
 import BroadcastCampaigns from "./pages/BroadcastCampaigns";
 import ChatbotBuilder from "./pages/ChatbotBuilder";
 import LeadsCRM from "./pages/LeadsCRM";
+import Templates from "./pages/Templates";
+import Conversations from "./pages/Conversations";
+import TeamManagement from "./pages/TeamManagement";
+import Analytics from "./pages/Analytics";
+import Tickets from "./pages/Tickets";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +33,12 @@ const App = () => (
             <Route path="/broadcasts" element={<BroadcastCampaigns />} />
             <Route path="/chatbots" element={<ChatbotBuilder />} />
             <Route path="/leads" element={<LeadsCRM />} />
-            {/* Add more routes here as you build them */}
+            <Route path="/templates" element={<Templates />} />
+            <Route path="/conversations" element={<Conversations />} />
+            <Route path="/team" element={<TeamManagement />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/tickets" element={<Tickets />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
