@@ -282,12 +282,12 @@ const BroadcastCampaigns = () => {
                             </div>
                             <p className="text-sm">
                               {selectedTemplate === 'welcome' 
-                                ? 'Hello {{1}}, welcome to our service! We're excited to have you onboard.' 
+                                ? "Hello {{1}}, welcome to our service! We're excited to have you onboard."
                                 : selectedTemplate === 'promotion' 
-                                ? 'Great news, {{1}}! We have a special offer just for you: {{2}} off your next purchase.' 
+                                ? "Great news, {{1}}! We have a special offer just for you: {{2}} off your next purchase."
                                 : selectedTemplate === 'feedback' 
-                                ? 'Hi {{1}}, we'd love to hear your feedback about your recent experience with us.' 
-                                : 'Reminder: You have an appointment scheduled for {{1}} at {{2}}. Reply YES to confirm.'}
+                                ? "Hi {{1}}, we'd love to hear your feedback about your recent experience with us."
+                                : "Reminder: You have an appointment scheduled for {{1}} at {{2}}. Reply YES to confirm."}
                             </p>
                           </div>
                         </CardContent>
@@ -519,7 +519,7 @@ const BroadcastCampaigns = () => {
                     <div className="flex flex-col">
                       <span className="font-medium">{campaign.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {campaign.template || 'Custom Message'} • 
+                        {campaign.template || 'Custom Message'} • {' '}
                         {campaign.scheduled ? 
                           new Date(campaign.scheduled).toLocaleDateString(undefined, {
                             month: 'short',
