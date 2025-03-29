@@ -250,7 +250,7 @@ const Templates = () => {
                         onChange={(e) => setTemplateContent(e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Use {{number}} for variables. Example: Hello {{1}}, your appointment is on {{2}}.
+                        Use {"{{number}}"} for variables. Example: Hello {"{{1}}"}, your appointment is on {"{{2}}"}.
                       </p>
                     </div>
                   </TabsContent>
