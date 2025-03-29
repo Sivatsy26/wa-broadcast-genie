@@ -100,7 +100,7 @@ const conversations: Conversation[] = [
       isOnline: true,
     },
     lastMessage: {
-      content: 'Yes, I'd like to book an appointment for next week.',
+      content: "Yes, I'd like to book an appointment for next week.",
       timestamp: '2023-06-23T10:23:00Z',
       isOutbound: false,
       isRead: true,
@@ -117,7 +117,7 @@ const conversations: Conversation[] = [
       avatar: '',
     },
     lastMessage: {
-      content: 'Thanks for the information. I'll check it and get back to you.',
+      content: "Thanks for the information. I'll check it and get back to you.",
       timestamp: '2023-06-23T09:45:00Z',
       isOutbound: true,
       isRead: true,
@@ -179,7 +179,7 @@ const conversations: Conversation[] = [
 const messages: Message[] = [
   {
     id: '1',
-    content: 'Hello! I'm interested in your services.',
+    content: "Hello! I'm interested in your services.",
     timestamp: '2023-06-23T09:30:00Z',
     isOutbound: false,
   },
@@ -193,7 +193,7 @@ const messages: Message[] = [
   },
   {
     id: '3',
-    content: 'I'd like to book an appointment for a consultation.',
+    content: "I'd like to book an appointment for a consultation.",
     timestamp: '2023-06-23T09:35:00Z',
     isOutbound: false,
   },
@@ -207,7 +207,7 @@ const messages: Message[] = [
   },
   {
     id: '5',
-    content: 'I'd prefer Tuesday afternoon if possible.',
+    content: "I'd prefer Tuesday afternoon if possible.",
     timestamp: '2023-06-23T09:40:00Z',
     isOutbound: false,
   },
@@ -227,7 +227,7 @@ const messages: Message[] = [
   },
   {
     id: '8',
-    content: 'Excellent! I've reserved Tuesday at 2 PM for your consultation. Could you please provide your name and contact information?',
+    content: "Excellent! I've reserved Tuesday at 2 PM for your consultation. Could you please provide your name and contact information?",
     timestamp: '2023-06-23T09:47:00Z',
     isOutbound: true,
     status: 'read',
@@ -241,7 +241,7 @@ const messages: Message[] = [
   },
   {
     id: '10',
-    content: 'Thank you, Sarah! Your appointment is confirmed for Tuesday at 2 PM. We'll send you a reminder the day before. Is there anything specific you'd like to discuss during the consultation?',
+    content: "Thank you, Sarah! Your appointment is confirmed for Tuesday at 2 PM. We'll send you a reminder the day before. Is there anything specific you'd like to discuss during the consultation?",
     timestamp: '2023-06-23T09:53:00Z',
     isOutbound: true,
     status: 'read',
@@ -249,13 +249,13 @@ const messages: Message[] = [
   },
   {
     id: '11',
-    content: 'Yes, I'd like to discuss your premium service options and pricing.',
+    content: "Yes, I'd like to discuss your premium service options and pricing.",
     timestamp: '2023-06-23T10:00:00Z',
     isOutbound: false,
   },
   {
     id: '12',
-    content: 'Perfect! We'll make sure to prepare information about our premium services for your consultation. If you have any questions before Tuesday, feel free to reach out.',
+    content: "Perfect! We'll make sure to prepare information about our premium services for your consultation. If you have any questions before Tuesday, feel free to reach out.",
     timestamp: '2023-06-23T10:05:00Z',
     isOutbound: true,
     status: 'read',
@@ -269,7 +269,7 @@ const messages: Message[] = [
   },
   {
     id: '14',
-    content: 'You're welcome, Sarah! We're looking forward to meeting you on Tuesday. Have a great rest of your day!',
+    content: "You're welcome, Sarah! We're looking forward to meeting you on Tuesday. Have a great rest of your day!",
     timestamp: '2023-06-23T10:10:00Z',
     isOutbound: true,
     status: 'read',
@@ -277,7 +277,7 @@ const messages: Message[] = [
   },
   {
     id: '15',
-    content: 'Yes, I'd like to book an appointment for next week.',
+    content: "Yes, I'd like to book an appointment for next week.",
     timestamp: '2023-06-23T10:23:00Z',
     isOutbound: false,
   },
