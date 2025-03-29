@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { 
   Settings as SettingsIcon, 
   User, 
@@ -46,7 +47,8 @@ import {
   EyeOff,
   Smartphone,
   LogOut,
-  Languages
+  Languages,
+  Plus
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
