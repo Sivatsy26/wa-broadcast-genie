@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import ContactSidebar from './ContactSidebar';
 import MessagePanel from './MessagePanel';
@@ -16,7 +17,7 @@ interface ConversationLayoutProps {
 }
 
 // Sample messages - in a real app, this would come from an API or database
-const messages = [
+const messages: Message[] = [
   {
     id: '1',
     content: "Hello! I'm interested in your services.",
