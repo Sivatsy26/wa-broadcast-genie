@@ -32,7 +32,7 @@ export const AIAssistantPanel: React.FC<{
         'greeting': 'Hello! Thanks for reaching out. How can I assist you today?',
         'pricing': 'Our standard package starts at $49/month with a 14-day free trial. Would you like me to send over our detailed pricing sheet?',
         'help': 'I understand you need assistance. Could you please provide more details about your issue so I can help you better?',
-        'default': 'Thank you for your message. I'll look into this and get back to you shortly. Is there anything specific you'd like me to address?',
+        'default': 'Thank you for your message. I\'ll look into this and get back to you shortly. Is there anything specific you\'d like me to address?',
       };
       
       // Simple keyword matching
