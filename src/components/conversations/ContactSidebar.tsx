@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns"; // Add this import to fix the error
+import { format } from "date-fns";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Search,
-  Filter,
   MessageSquare,
   RefreshCw,
   CheckCircle,
@@ -30,12 +29,14 @@ import {
   User,
   X,
   Tag,
+  Filter,
+  Plus,
 } from 'lucide-react';
 import { Conversation } from '@/types/conversation';
 import { DateRange } from 'react-day-picker';
 import DateRangePicker from './DateRangePicker';
 
-interface ConversationListProps {
+interface ContactSidebarProps {
   conversations: Conversation[];
   activeConversation: Conversation | null;
   setActiveConversation: (conversation: Conversation) => void;
@@ -51,7 +52,7 @@ interface ConversationListProps {
   setTagFilter?: (tag: string) => void;
 }
 
-const ConversationList: React.FC<ConversationListProps> = ({
+const ContactSidebar: React.FC<ContactSidebarProps> = ({
   conversations,
   activeConversation,
   setActiveConversation,
@@ -120,6 +121,13 @@ const ConversationList: React.FC<ConversationListProps> = ({
   return (
     <div className="w-1/3 flex flex-col bg-white rounded-lg border shadow-sm overflow-hidden">
       <div className="p-4 border-b">
+        <div className="flex justify-between items-center mb-3">
+          <div className="text-sm font-medium">My Conversations</div>
+          <Button size="sm" variant="outline" className="text-xs flex gap-1">
+            <Plus className="h-3 w-3" />
+            New Chat
+          </Button>
+        </div>
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -276,11 +284,6 @@ const ConversationList: React.FC<ConversationListProps> = ({
             <RefreshCw className="h-3 w-3 mr-1 text-green-600" />
             Active
           </Button>
-          
-          <Button variant="outline" size="sm" className="text-xs">
-            <Badge className="h-4 w-4 px-1 text-[10px] bg-blue-500">3</Badge>
-            <span className="ml-1">Unread</span>
-          </Button>
         </div>
         
         {/* Show active filters */}
@@ -401,4 +404,4 @@ const ConversationList: React.FC<ConversationListProps> = ({
   );
 };
 
-export default ConversationList;
+export default ContactSidebar;

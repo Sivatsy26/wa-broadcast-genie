@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
   BarChart3, 
+  MessageCircle, 
   Users, 
   Send, 
   Smartphone, 
@@ -10,8 +12,7 @@ import {
   Settings, 
   FileText, 
   Ticket, 
-  Home,
-  MessageSquare
+  Home
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,9 +32,9 @@ const navItems: NavItem[] = [
     icon: <Home className="h-5 w-5" />,
   },
   {
-    title: 'Conversations',
-    href: '/conversations',
-    icon: <MessageSquare className="h-5 w-5" />,
+    title: 'Broadcasts',
+    href: '/broadcasts',
+    icon: <Send className="h-5 w-5" />,
   },
   {
     title: 'WhatsApp Accounts',
@@ -49,6 +50,11 @@ const navItems: NavItem[] = [
     title: 'Chatbots',
     href: '/chatbots',
     icon: <Bot className="h-5 w-5" />,
+  },
+  {
+    title: 'Conversations',
+    href: '/conversations',
+    icon: <MessageCircle className="h-5 w-5" />,
   },
   {
     title: 'Leads & Clients',

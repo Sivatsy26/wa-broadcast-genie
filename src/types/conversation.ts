@@ -1,38 +1,12 @@
 
-// Type definitions for conversation related components
-
-export type MessageStatus = "sent" | "delivered" | "read";
-export type MessageType = "text" | "image" | "video" | "voice" | "document";
-export type ConversationStatus = "active" | "waiting" | "resolved" | "new";
-
-export interface Contact {
-  name: string;
-  phone: string;
-  avatar?: string;
-  isOnline?: boolean;
-}
-
-export interface Media {
-  url: string;
-  type: "image" | "video" | "voice" | "document";
-  filename?: string;
-  duration?: number;
-}
-
-export interface Message {
-  id: string;
-  content: string;
-  timestamp: string;
-  isOutbound: boolean;
-  status?: MessageStatus;
-  sender?: string;
-  type?: MessageType;
-  media?: Media;
-}
-
 export interface Conversation {
   id: string;
-  contact: Contact;
+  contact: {
+    name: string;
+    phone: string;
+    avatar?: string;
+    isOnline?: boolean;
+  };
   lastMessage: {
     content: string;
     timestamp: string;
@@ -41,5 +15,22 @@ export interface Conversation {
   };
   assignedTo?: string;
   tags?: string[];
-  status: ConversationStatus;
+  status: 'new' | 'active' | 'resolved' | 'waiting';
+  createdAt?: string; // Adding this for date filtering
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  timestamp: string;
+  isOutbound: boolean;
+  status?: 'sent' | 'delivered' | 'read';
+  sender?: string;
+  type?: 'text' | 'image' | 'video' | 'document' | 'voice';
+  media?: {
+    url: string;
+    type: 'image' | 'video' | 'document' | 'voice';
+    filename?: string;
+    duration?: number;
+  };
 }
