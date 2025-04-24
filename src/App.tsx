@@ -12,7 +12,6 @@ import BroadcastCampaigns from "./pages/BroadcastCampaigns";
 import ChatbotBuilder from "./pages/ChatbotBuilder";
 import LeadsCRM from "./pages/LeadsCRM";
 import Templates from "./pages/Templates";
-import ConversationPage from "./pages/ConversationPage"; // Updated import
 import TeamManagement from "./pages/TeamManagement";
 import Analytics from "./pages/Analytics";
 import Tickets from "./pages/Tickets";
@@ -34,7 +33,6 @@ const App = () => (
             <Route path="/chatbots" element={<ChatbotBuilder />} />
             <Route path="/leads" element={<LeadsCRM />} />
             <Route path="/templates" element={<Templates />} />
-            <Route path="/conversations" element={<ConversationPage />} />
             <Route path="/team" element={<TeamManagement />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/tickets" element={<Tickets />} />
