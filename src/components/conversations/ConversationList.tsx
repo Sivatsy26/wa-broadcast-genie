@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,14 +24,16 @@ import {
   RefreshCw,
   CheckCircle,
   Clock,
-  SlidersHorizontal,
   User,
-  X,
   Tag,
+  X,
+  SlidersHorizontal,
+  Star,
 } from 'lucide-react';
 import { Conversation } from '@/types/conversation';
 import { DateRange } from 'react-day-picker';
 import DateRangePicker from './DateRangePicker';
+import { format } from 'date-fns';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -48,6 +49,8 @@ interface ConversationListProps {
   setAssigneeFilter?: (assignee: string) => void;
   tagFilter?: string;
   setTagFilter?: (tag: string) => void;
+  typeFilter?: 'all' | 'client' | 'lead';
+  setTypeFilter?: (type: 'all' | 'client' | 'lead') => void;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({
@@ -63,7 +66,9 @@ const ConversationList: React.FC<ConversationListProps> = ({
   assigneeFilter,
   setAssigneeFilter,
   tagFilter,
-  setTagFilter
+  setTagFilter,
+  typeFilter = 'all',
+  setTypeFilter
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -105,6 +110,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
     !!dateRange?.from,
     !!assigneeFilter,
     !!tagFilter,
+    typeFilter !== 'all'
   ].filter(Boolean).length;
 
   // Reset all filters function
@@ -113,6 +119,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
     setDateRange && setDateRange(undefined);
     setAssigneeFilter && setAssigneeFilter('');
     setTagFilter && setTagFilter('');
+    setTypeFilter && setTypeFilter('all');
     setSearchTerm('');
   };
 
@@ -144,6 +151,29 @@ const ConversationList: React.FC<ConversationListProps> = ({
             <DropdownMenuContent className="w-56">
               <DropdownMenuLabel>Conversation Filters</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              
+              {/* Contact Type Filter */}
+              {setTypeFilter && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <User className="h-4 w-4 mr-2" />
+                    Type: {typeFilter === 'all' ? 'All' : typeFilter}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => setTypeFilter('all')}>
+                        All Types
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTypeFilter('client')}>
+                        Clients
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTypeFilter('lead')}>
+                        Leads
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              )}
               
               {/* Status Filter */}
               <DropdownMenuSub>
@@ -181,7 +211,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <User className="h-4 w-4 mr-2" />
-                    Assignee: {assigneeFilter ? assigneeFilter : 'All'}
+                    Assignee: {assigneeFilter || 'All'}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
@@ -207,7 +237,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <Tag className="h-4 w-4 mr-2" />
-                    Tag: {tagFilter ? tagFilter : 'All'}
+                    Tag: {tagFilter || 'All'}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
@@ -275,11 +305,6 @@ const ConversationList: React.FC<ConversationListProps> = ({
             <RefreshCw className="h-3 w-3 mr-1 text-green-600" />
             Active
           </Button>
-          
-          <Button variant="outline" size="sm" className="text-xs">
-            <Badge className="h-4 w-4 px-1 text-[10px] bg-blue-500">3</Badge>
-            <span className="ml-1">Unread</span>
-          </Button>
         </div>
         
         {/* Show active filters */}
@@ -289,6 +314,13 @@ const ConversationList: React.FC<ConversationListProps> = ({
               <Badge variant="outline" className="text-xs flex items-center gap-1">
                 Status: {statusFilter}
                 <X className="h-3 w-3 cursor-pointer" onClick={() => setStatusFilter('all')} />
+              </Badge>
+            )}
+            
+            {typeFilter !== 'all' && setTypeFilter && (
+              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                Type: {typeFilter}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setTypeFilter('all')} />
               </Badge>
             )}
             
@@ -317,6 +349,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
         )}
       </div>
       
+      {/* Conversation List */}
       <div className="flex-1 overflow-auto">
         {conversations.length > 0 ? (
           conversations.map((conversation) => (
@@ -341,7 +374,12 @@ const ConversationList: React.FC<ConversationListProps> = ({
                     )}
                   </div>
                   <div>
-                    <div className="font-medium">{conversation.contact.name}</div>
+                    <div className="font-medium flex items-center gap-2">
+                      {conversation.contact.name}
+                      {conversation.contact.isStarred && (
+                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground">{conversation.contact.phone}</div>
                   </div>
                 </div>

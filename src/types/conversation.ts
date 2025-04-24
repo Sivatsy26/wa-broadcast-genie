@@ -1,4 +1,3 @@
-
 export interface Conversation {
   id: string;
   contact: {
@@ -6,6 +5,11 @@ export interface Conversation {
     phone: string;
     avatar?: string;
     isOnline?: boolean;
+    type: 'client' | 'lead';
+    email?: string;
+    isBlocked?: boolean;
+    isStarred?: boolean;
+    isMuted?: boolean;
   };
   lastMessage: {
     content: string;
@@ -16,7 +20,7 @@ export interface Conversation {
   assignedTo?: string;
   tags?: string[];
   status: 'new' | 'active' | 'resolved' | 'waiting';
-  createdAt?: string; // Adding this for date filtering
+  createdAt?: string;
 }
 
 export interface Message {
