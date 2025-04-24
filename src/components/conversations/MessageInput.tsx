@@ -1,7 +1,11 @@
 
 import React from 'react';
 
-const MessageInput = () => {
+interface MessageInputProps {
+  onSendMessage: (content: string, file: File | null) => void;
+}
+
+const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   return <div>Message Input (Placeholder)</div>;
 };
 

@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-const NoConversation = () => {
+const NoConversation: React.FC = () => {
   return <div>No Conversation Selected</div>;
 };
 
