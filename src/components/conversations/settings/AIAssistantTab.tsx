@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { upload, database } from 'lucide-react';
+import { Upload, Database } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 
 const AIAssistantTab: React.FC = () => {
@@ -119,7 +119,7 @@ const AIAssistantTab: React.FC = () => {
                 
                 <Button variant="outline" className="w-full">
                   <label className="flex items-center justify-center w-full cursor-pointer">
-                    <upload className="mr-2 h-4 w-4" />
+                    <Upload className="mr-2 h-4 w-4" />
                     <span>Upload Document</span>
                     <input 
                       type="file" 
@@ -143,7 +143,7 @@ const AIAssistantTab: React.FC = () => {
                 {knowledgeDocuments.map((doc, index) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
                     <div className="flex items-center">
-                      <database className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <Database className="h-4 w-4 mr-2 text-muted-foreground" />
                       <span className="text-sm">{doc}</span>
                     </div>
                     <Button 

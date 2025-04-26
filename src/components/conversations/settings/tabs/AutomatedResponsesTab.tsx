@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { trash2, edit, messageSquarePlus } from 'lucide-react';
+import { Trash2, Edit, MessageSquarePlus } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -172,7 +172,7 @@ const AutomatedResponsesTab: React.FC = () => {
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <messageSquarePlus className="mr-2 h-4 w-4" />
+              <MessageSquarePlus className="mr-2 h-4 w-4" />
               Add New Response
             </Button>
           </DialogTrigger>
@@ -238,14 +238,13 @@ const AutomatedResponsesTab: React.FC = () => {
                   <Switch 
                     checked={response.active}
                     onCheckedChange={() => toggleResponseActive(response.id)}
-                    size="sm"
                   />
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => startEditingResponse(response)}
                   >
-                    <edit className="h-4 w-4" />
+                    <Edit className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="ghost" 
@@ -253,7 +252,7 @@ const AutomatedResponsesTab: React.FC = () => {
                     className="text-red-500 hover:text-red-700"
                     onClick={() => handleDeleteResponse(response.id)}
                   >
-                    <trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

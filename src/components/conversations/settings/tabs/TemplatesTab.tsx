@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { fileText, trash2, edit, filePlus } from 'lucide-react';
+import { FileText, Trash2, Edit, FilePlus } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 
 interface Template {
@@ -80,7 +80,7 @@ const TemplatesTab: React.FC = () => {
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <filePlus className="mr-2 h-4 w-4" />
+              <FilePlus className="mr-2 h-4 w-4" />
               Add New Template
             </Button>
           </DialogTrigger>
@@ -118,7 +118,7 @@ const TemplatesTab: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center">
-                  <fileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
                   <h3 className="font-medium">{template.name}</h3>
                 </div>
                 <div className="flex space-x-2">
@@ -127,7 +127,7 @@ const TemplatesTab: React.FC = () => {
                     size="sm" 
                     onClick={() => startEditingTemplate(template)}
                   >
-                    <edit className="h-4 w-4" />
+                    <Edit className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="ghost" 
@@ -135,7 +135,7 @@ const TemplatesTab: React.FC = () => {
                     className="text-red-500 hover:text-red-700"
                     onClick={() => handleDeleteTemplate(template.id)}
                   >
-                    <trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

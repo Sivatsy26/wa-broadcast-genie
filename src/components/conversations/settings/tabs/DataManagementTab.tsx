@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { import as importIcon, export as exportIcon, database, trash2 } from 'lucide-react';
+import { Import, FileText, Database, Trash2 } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -100,13 +100,13 @@ const DataManagementTab: React.FC = () => {
               className="flex items-center justify-center" 
               onClick={handleExportData}
             >
-              <exportIcon className="mr-2 h-4 w-4" />
+              <FileText className="mr-2 h-4 w-4" />
               Export Conversation Data
             </Button>
             
             <Button variant="outline" className="flex items-center justify-center">
               <label className="flex items-center justify-center w-full cursor-pointer">
-                <importIcon className="mr-2 h-4 w-4" />
+                <Import className="mr-2 h-4 w-4" />
                 <span>Import Conversation Data</span>
                 <input 
                   type="file" 
@@ -130,7 +130,7 @@ const DataManagementTab: React.FC = () => {
                   variant="outline" 
                   className="flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50"
                 >
-                  <trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className="mr-2 h-4 w-4" />
                   Delete All Conversation Data
                 </Button>
               </DialogTrigger>
