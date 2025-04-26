@@ -7,6 +7,7 @@ import DisappearingMessagesTab from './tabs/DisappearingMessagesTab';
 import TemplatesTab from './tabs/TemplatesTab';
 import DataManagementTab from './tabs/DataManagementTab';
 import AutomatedResponsesTab from './tabs/AutomatedResponsesTab';
+import AISettingsTab from './tabs/AISettingsTab';
 
 const SettingsPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("appearance");
@@ -14,10 +15,11 @@ const SettingsPanel: React.FC = () => {
   return (
     <div className="w-full">
       <Tabs defaultValue="appearance" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 mb-4">
+        <TabsList className="grid grid-cols-4 mb-4">
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="disappearing">Disappearing Messages</TabsTrigger>
+          <TabsTrigger value="ai">AI Assistant</TabsTrigger>
         </TabsList>
         <TabsList className="grid grid-cols-3 mb-4">
           <TabsTrigger value="templates">Templates</TabsTrigger>
@@ -35,6 +37,10 @@ const SettingsPanel: React.FC = () => {
 
         <TabsContent value="disappearing" className="pt-4">
           <DisappearingMessagesTab />
+        </TabsContent>
+
+        <TabsContent value="ai" className="pt-4">
+          <AISettingsTab />
         </TabsContent>
 
         <TabsContent value="templates" className="pt-4">

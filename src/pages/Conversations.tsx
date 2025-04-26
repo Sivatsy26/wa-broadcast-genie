@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { DateRange } from 'react-day-picker';
@@ -10,6 +9,11 @@ import ContactInfoSidebar from '@/components/conversations/ContactInfoSidebar';
 import ConversationHeader from '@/components/conversations/ConversationHeader';
 import NoConversation from '@/components/conversations/NoConversation';
 import { Conversation, Message } from '@/types/conversation';
+import { Bot, Users, Settings } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import AIAssistantWidget from '@/components/conversations/AIAssistantWidget';
+import SettingsPanel from '@/components/conversations/settings/SettingsPanel';
 
 const conversations: Conversation[] = [
   {
@@ -246,6 +250,15 @@ const Conversations = () => {
   const [tagFilter, setTagFilter] = useState<string>('');
   const [localMessages, setLocalMessages] = useState<Message[]>(messages);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [selectedAccount, setSelectedAccount] = useState<string>("1");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+
+  const whatsappAccounts = [
+    { id: "1", name: "Business Account", phone: "+1 (555) 123-4567" },
+    { id: "2", name: "Support Account", phone: "+1 (555) 234-5678" },
+    { id: "3", name: "Marketing Account", phone: "+1 (555) 345-6789" },
+  ];
 
   useEffect(() => {
     scrollToBottom();
@@ -407,12 +420,61 @@ const Conversations = () => {
 
   return (
     <div className="space-y-4 h-full flex flex-col animate-fade-in">
-      <div className="flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tight">Conversations</h1>
-        <p className="text-muted-foreground">
-          Manage your WhatsApp conversations with customers
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-bold tracking-tight">Conversations</h1>
+          <p className="text-muted-foreground">
+            Manage your WhatsApp conversations with customers
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Select account" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Business Accounts</SelectLabel>
+                {whatsappAccounts.map(account => (
+                  <SelectItem key={account.id} value={account.id}>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="text-sm">{account.name}</span>
+                        <span className="text-xs text-muted-foreground">{account.phone}</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          <Button variant="outline" size="icon" onClick={() => setIsAIAssistantOpen(true)}>
+            <Bot className="h-4 w-4" />
+          </Button>
+          
+          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[725px]">
+              <DialogHeader>
+                <DialogTitle>Conversation Settings</DialogTitle>
+              </DialogHeader>
+              <SettingsPanel />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      <AIAssistantWidget 
+        isOpen={isAIAssistantOpen} 
+        onClose={() => setIsAIAssistantOpen(false)} 
+      />
 
       <div className="flex flex-1 gap-4 h-[calc(100vh-13rem)] overflow-hidden">
         <ConversationList 
