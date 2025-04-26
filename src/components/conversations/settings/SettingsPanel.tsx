@@ -7,7 +7,6 @@ import DisappearingMessagesTab from './tabs/DisappearingMessagesTab';
 import TemplatesTab from './tabs/TemplatesTab';
 import DataManagementTab from './tabs/DataManagementTab';
 import AutomatedResponsesTab from './tabs/AutomatedResponsesTab';
-import AIAssistantTab from './AIAssistantTab';
 
 const SettingsPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("appearance");
@@ -20,11 +19,10 @@ const SettingsPanel: React.FC = () => {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="disappearing">Disappearing Messages</TabsTrigger>
         </TabsList>
-        <TabsList className="grid grid-cols-4 mb-4">
+        <TabsList className="grid grid-cols-3 mb-4">
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="data">Data Management</TabsTrigger>
           <TabsTrigger value="automated">Automated Responses</TabsTrigger>
-          <TabsTrigger value="ai">AI Assistant</TabsTrigger>
         </TabsList>
 
         <TabsContent value="appearance" className="pt-4">
@@ -49,10 +47,6 @@ const SettingsPanel: React.FC = () => {
 
         <TabsContent value="automated" className="pt-4">
           <AutomatedResponsesTab />
-        </TabsContent>
-        
-        <TabsContent value="ai" className="pt-4">
-          <AIAssistantTab />
         </TabsContent>
       </Tabs>
     </div>

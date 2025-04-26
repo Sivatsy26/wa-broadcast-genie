@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,8 +25,9 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SettingsPanel from './settings/SettingsPanel';
+import AIAssistantWidget from './AIAssistantWidget';
 
 interface WhatsAppAccount {
   id: string;
@@ -49,10 +49,10 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   const [activeAttachmentType, setActiveAttachmentType] = useState<string | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<string>("1");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recordingTimerRef = useRef<number | null>(null);
 
-  // Mock accounts - would come from an API in a real implementation
   const whatsappAccounts: WhatsAppAccount[] = [
     { id: "1", name: "Business Account", phone: "+1 (555) 123-4567" },
     { id: "2", name: "Support Account", phone: "+1 (555) 234-5678" },
@@ -109,8 +109,6 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
         description: `Voice message (${recordingTime}s) has been sent.`,
       });
       
-      // Here we would normally process the voice recording
-      // For now, we'll just clear the recording state
       setRecordingTime(0);
     } else {
       toast({
@@ -138,26 +136,41 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
 
   return (
     <div className="p-3 border-t">
+      <AIAssistantWidget 
+        isOpen={isAIAssistantOpen} 
+        onClose={() => setIsAIAssistantOpen(false)} 
+      />
+      
       <div className="flex items-center gap-2 mb-2">
         <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-          <SelectTrigger className="h-8 w-36">
+          <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select account" />
           </SelectTrigger>
           <SelectContent>
-            {whatsappAccounts.map(account => (
-              <SelectItem key={account.id} value={account.id}>
-                <div className="flex items-center">
-                  <User className="h-3 w-3 mr-1" />
-                  {account.name}
-                </div>
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              <SelectLabel>Business Accounts</SelectLabel>
+              {whatsappAccounts.map(account => (
+                <SelectItem key={account.id} value={account.id}>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    <div className="flex flex-col">
+                      <span className="text-sm">{account.name}</span>
+                      <span className="text-xs text-muted-foreground">{account.phone}</span>
+                    </div>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
+
+        <Button variant="outline" size="icon" onClick={() => setIsAIAssistantOpen(true)}>
+          <Bot className="h-4 w-4" />
+        </Button>
         
         <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="outline" size="icon">
               <Settings className="h-4 w-4" />
             </Button>
           </DialogTrigger>
