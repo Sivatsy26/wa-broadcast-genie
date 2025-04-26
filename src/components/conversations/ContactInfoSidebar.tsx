@@ -17,7 +17,7 @@ import {
 import {
   Star,
   BellOff,
-  Block,
+  Blocks,
   Tag,
   Pencil,
 } from "lucide-react";
@@ -143,7 +143,7 @@ const ContactInfoSidebar: React.FC<ContactInfoSidebarProps> = ({
               className={conversation.contact.isBlocked ? "bg-red-50" : ""}
               onClick={handleToggleBlock}
             >
-              <Block className={`h-4 w-4 mr-1 ${conversation.contact.isBlocked ? "text-red-500" : ""}`} />
+              <Blocks className={`h-4 w-4 mr-1 ${conversation.contact.isBlocked ? "text-red-500" : ""}`} />
               {conversation.contact.isBlocked ? "Blocked" : "Block"}
             </Button>
           </div>

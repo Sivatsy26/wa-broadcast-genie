@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { DateRange } from 'react-day-picker';
@@ -18,6 +19,7 @@ const conversations: Conversation[] = [
       phone: '+1 555-123-4567',
       avatar: '',
       isOnline: true,
+      type: 'client',
     },
     lastMessage: {
       content: "Yes, I'd like to book an appointment for next week.",
@@ -35,6 +37,7 @@ const conversations: Conversation[] = [
       name: 'David Williams',
       phone: '+1 555-987-6543',
       avatar: '',
+      type: 'lead',
     },
     lastMessage: {
       content: "Thanks for the information. I'll check it and get back to you.",
@@ -50,6 +53,7 @@ const conversations: Conversation[] = [
       name: 'Michael Brown',
       phone: '+1 555-567-8901',
       avatar: '',
+      type: 'lead',
     },
     lastMessage: {
       content: 'I have a question about my recent order #45678.',
@@ -66,6 +70,7 @@ const conversations: Conversation[] = [
       phone: '+1 555-345-6789',
       avatar: '',
       isOnline: true,
+      type: 'client',
     },
     lastMessage: {
       content: 'Your appointment has been confirmed for June 25th at 2 PM.',
@@ -83,6 +88,7 @@ const conversations: Conversation[] = [
       name: 'James Wilson',
       phone: '+1 555-234-5678',
       avatar: '',
+      type: 'client',
     },
     lastMessage: {
       content: 'Do you have this product in blue?',
