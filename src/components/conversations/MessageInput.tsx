@@ -8,6 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { 
   Paperclip, 
@@ -17,10 +18,23 @@ import {
   Smile,
   Image, 
   Video, 
-  FileText 
+  FileText,
+  Settings,
+  User,
+  Users 
 } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import SettingsPanel from './settings/SettingsPanel';
+
+interface WhatsAppAccount {
+  id: string;
+  name: string;
+  phone: string;
+  avatar?: string;
+}
 
 interface MessageInputProps {
   onSendMessage: (content: string, file: File | null) => void;
@@ -33,8 +47,17 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showFilePreview, setShowFilePreview] = useState(false);
   const [activeAttachmentType, setActiveAttachmentType] = useState<string | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<string>("1");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recordingTimerRef = useRef<number | null>(null);
+
+  // Mock accounts - would come from an API in a real implementation
+  const whatsappAccounts: WhatsAppAccount[] = [
+    { id: "1", name: "Business Account", phone: "+1 (555) 123-4567" },
+    { id: "2", name: "Support Account", phone: "+1 (555) 234-5678" },
+    { id: "3", name: "Marketing Account", phone: "+1 (555) 345-6789" },
+  ];
 
   const emojis = ['😀', '😂', '😊', '😍', '🥰', '😘', '😎', '👍', '🙏', '❤️', '🔥', '⭐', '🎉', '✅', '🤔', '👏', '🌟', '💯', '🤣', '😢'];
 
@@ -115,6 +138,38 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
 
   return (
     <div className="p-3 border-t">
+      <div className="flex items-center gap-2 mb-2">
+        <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+          <SelectTrigger className="h-8 w-36">
+            <SelectValue placeholder="Select account" />
+          </SelectTrigger>
+          <SelectContent>
+            {whatsappAccounts.map(account => (
+              <SelectItem key={account.id} value={account.id}>
+                <div className="flex items-center">
+                  <User className="h-3 w-3 mr-1" />
+                  {account.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Settings className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[725px]">
+            <DialogHeader>
+              <DialogTitle>Conversation Settings</DialogTitle>
+            </DialogHeader>
+            <SettingsPanel />
+          </DialogContent>
+        </Dialog>
+      </div>
+      
       <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
