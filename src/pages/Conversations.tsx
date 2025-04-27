@@ -1,12 +1,11 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Button } from "@/components/ui/button"; // Add this import
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { DateRange } from 'react-day-picker';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import ConversationList from '@/components/conversations/ConversationList';
 import MessageList from '@/components/conversations/MessageList';
-import MessageInput from '@/components/conversations/MessageInput';
+import MessageInput from '@/components/conversations/message-input';
 import ContactInfoSidebar from '@/components/conversations/ContactInfoSidebar';
 import ConversationHeader from '@/components/conversations/ConversationHeader';
 import NoConversation from '@/components/conversations/NoConversation';
