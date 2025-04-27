@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -82,14 +81,12 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
         recordingTimerRef.current = null;
       }
       
-      const voiceFile = {
-        type: 'voice',
-        name: `voice-${Date.now()}.mp3`,
-        size: 0
-      } as File;
+      const audioBlob = new Blob(['dummy-audio-data'], { type: 'audio/mp3' });
+      const voiceFile = new File([audioBlob], `voice-${Date.now()}.mp3`, {
+        type: 'audio/mp3',
+      });
       
       onSendMessage('', voiceFile);
-      
       setRecordingTime(0);
       
       toast({

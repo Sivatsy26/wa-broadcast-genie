@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Upload, Database, Info } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
@@ -20,9 +18,6 @@ const AISettingsTab = () => {
     "Customer FAQs.pdf",
     "Service Procedures.docx"
   ]);
-  const [aiInstructionsText, setAiInstructionsText] = useState<string>(
-    "Assist customers with product inquiries and order status. When responding to product questions, always recommend our premium tier options first."
-  );
 
   const simulateUpload = (file: File) => {
     setUploadingFile(true);
@@ -57,13 +52,6 @@ const AISettingsTab = () => {
     toast({
       title: "Document removed",
       description: `${filename} has been removed from AI knowledge base.`
-    });
-  };
-
-  const handleSaveInstructions = () => {
-    toast({
-      title: "AI instructions saved",
-      description: "The AI assistant will use these instructions when responding to customers."
     });
   };
 
@@ -160,27 +148,6 @@ const AISettingsTab = () => {
                 No documents uploaded yet. Add documents to enhance AI responses.
               </p>
             )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="font-medium mb-3">AI Instructions</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Provide specific instructions for how the AI should respond to customer inquiries
-            </p>
-            
-            <Textarea
-              placeholder="Enter instructions for the AI assistant..."
-              rows={6}
-              value={aiInstructionsText}
-              onChange={(e) => setAiInstructionsText(e.target.value)}
-              className="mb-4"
-            />
-            
-            <div className="flex justify-end">
-              <Button onClick={handleSaveInstructions}>Save Instructions</Button>
-            </div>
           </CardContent>
         </Card>
       </div>
