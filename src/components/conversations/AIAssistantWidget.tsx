@@ -35,37 +35,37 @@ const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({ isOpen, onClose }
   if (!isOpen) return null;
 
   return (
-    <Card className="fixed bottom-24 right-4 w-80 shadow-lg z-50">
+    <Card className="fixed bottom-24 right-4 w-64 shadow-lg z-50">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium flex items-center justify-between">
+        <CardTitle className="text-xs font-medium flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Bot className="h-4 w-4" />
+            <Bot className="h-3 w-3" />
             AI Assistant
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>×</Button>
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-6 w-6 p-0">×</Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[300px] pr-4 mb-4">
+        <ScrollArea className="h-[200px] pr-4 mb-2">
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={`mb-2 p-2 rounded-lg ${
+              className={`mb-2 p-1.5 text-xs rounded-lg ${
                 msg.isBot 
-                  ? 'bg-secondary text-secondary-foreground ml-0 mr-8' 
-                  : 'bg-primary text-primary-foreground ml-8 mr-0'
+                  ? 'bg-secondary text-secondary-foreground ml-0 mr-6' 
+                  : 'bg-primary text-primary-foreground ml-6 mr-0'
               }`}
             >
               {msg.content}
             </div>
           ))}
         </ScrollArea>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask your question..."
-            className="min-h-[44px] max-h-[120px]"
+            className="min-h-[36px] max-h-[100px] text-sm"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -73,7 +73,7 @@ const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({ isOpen, onClose }
               }
             }}
           />
-          <Button onClick={handleSendMessage}>Send</Button>
+          <Button size="sm" onClick={handleSendMessage}>Send</Button>
         </div>
       </CardContent>
     </Card>
