@@ -81,13 +81,17 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
         recordingTimerRef.current = null;
       }
       
-      onSendMessage('', null);
+      onSendMessage('', {
+        type: 'voice',
+        name: `voice-${Date.now()}.mp3',
+        size: 0,
+      });
       
       setRecordingTime(0);
       
       toast({
-        title: "Voice message recorded",
-        description: `Voice message (${recordingTime}s) has been sent.`,
+        title: "Voice message sent",
+        description: `Voice message (${recordingTime}s) has been sent successfully.`,
       });
     } else {
       toast({
