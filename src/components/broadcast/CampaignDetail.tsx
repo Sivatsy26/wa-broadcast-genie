@@ -23,12 +23,14 @@ import {
   Eye,
   FileText,
   ChevronRight,
+  Tag,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { BroadcastCampaign } from "../../pages/BroadcastCampaigns";
 
 interface CampaignDetailProps {
-  campaign: any;
+  campaign: BroadcastCampaign | null;
   open: boolean;
   onClose: () => void;
 }
@@ -56,7 +58,7 @@ export function CampaignDetail({ campaign, open, onClose }: CampaignDetailProps)
       <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">{campaign.name}</DialogTitle>
-          <DialogDescription className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Badge className={`${getStatusColor(campaign.status)} capitalize`}>
               {campaign.status}
             </Badge>
@@ -71,6 +73,18 @@ export function CampaignDetail({ campaign, open, onClose }: CampaignDetailProps)
                   minute: 'numeric',
                 })}
               </span>
+            )}
+          </div>
+          <DialogDescription>
+            {campaign.tags && campaign.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {campaign.tags.map((tag) => (
+                  <Badge key={tag} variant="outline" className="bg-primary/10">
+                    <Tag className="h-3 w-3 mr-1" />
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
             )}
           </DialogDescription>
         </DialogHeader>
