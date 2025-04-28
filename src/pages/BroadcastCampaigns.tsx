@@ -274,7 +274,6 @@ const BroadcastCampaigns = () => {
 
   const handleEditCampaign = (campaign: BroadcastCampaign) => {
     setEditingCampaign({...campaign});
-    // Set form values based on the campaign
     setCampaignName(campaign.name);
     setSelectedTemplate(campaign.template || '');
     setSelectedAudience(
@@ -331,11 +330,14 @@ const BroadcastCampaigns = () => {
 
   const handleDeleteCampaign = (campaignId: string) => {
     setCampaignToDelete(campaignId);
+    setShowDetailDialog(false);
   };
 
   const confirmDeleteCampaign = () => {
     if (campaignToDelete) {
-      setCampaigns(campaigns.filter(campaign => campaign.id !== campaignToDelete));
+      setCampaigns(prevCampaigns => 
+        prevCampaigns.filter(campaign => campaign.id !== campaignToDelete)
+      );
       setCampaignToDelete(null);
       
       toast({
@@ -669,7 +671,6 @@ const BroadcastCampaigns = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Edit Campaign Dialog */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
@@ -680,7 +681,6 @@ const BroadcastCampaigns = () => {
             </DialogHeader>
             
             <div className="space-y-6 py-4">
-              {/* Same content as create dialog, but for editing */}
               <div className="space-y-2">
                 <Label htmlFor="campaign-name-edit">Campaign Name</Label>
                 <Input
@@ -919,7 +919,12 @@ const BroadcastCampaigns = () => {
         onDelete={handleDeleteCampaign}
       />
 
-      <AlertDialog open={!!campaignToDelete} onOpenChange={() => setCampaignToDelete(null)}>
+      <AlertDialog 
+        open={campaignToDelete !== null} 
+        onOpenChange={(open) => {
+          if (!open) setCampaignToDelete(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Campaign</AlertDialogTitle>

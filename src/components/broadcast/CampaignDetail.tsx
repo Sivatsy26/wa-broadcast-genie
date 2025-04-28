@@ -57,6 +57,14 @@ export function CampaignDetail({ campaign, open, onClose, onEdit, onDelete }: Ca
     }
   };
 
+  const handleEdit = () => {
+    onEdit(structuredClone(campaign));
+  };
+  
+  const handleDelete = () => {
+    onDelete(campaign.id);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
@@ -86,7 +94,7 @@ export function CampaignDetail({ campaign, open, onClose, onEdit, onDelete }: Ca
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onEdit(campaign)}
+                onClick={handleEdit}
               >
                 <Pencil className="h-4 w-4 mr-1" />
                 Edit
@@ -94,7 +102,7 @@ export function CampaignDetail({ campaign, open, onClose, onEdit, onDelete }: Ca
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => onDelete(campaign.id)}
+                onClick={handleDelete}
               >
                 <Trash2 className="h-4 w-4 mr-1" />
                 Delete
