@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -35,6 +35,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Plus,
   FileText,
   Users,
@@ -65,6 +75,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { DateTimePicker } from "@/components/broadcast/DateTimePicker";
+import { AudienceUploader } from "@/components/broadcast/AudienceUploader";
+import { CampaignDetail } from "@/components/broadcast/CampaignDetail";
+import FilePreview from "@/components/conversations/message-input/FilePreview";
 
 interface BroadcastCampaign {
   id: string;
@@ -79,7 +93,7 @@ interface BroadcastCampaign {
   scheduled: string;
 }
 
-const campaigns: BroadcastCampaign[] = [
+const initialCampaigns: BroadcastCampaign[] = [
   {
     id: '1',
     name: 'Summer Promotion',
@@ -131,11 +145,23 @@ const campaigns: BroadcastCampaign[] = [
 
 const BroadcastCampaigns = () => {
   const { toast } = useToast();
+  const [campaigns, setCampaigns] = useState<BroadcastCampaign[]>(initialCampaigns);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [selectedAudience, setSelectedAudience] = useState<string>('');
   const [campaignName, setCampaignName] = useState<string>('');
   const [messageContent, setMessageContent] = useState<string>('');
   const [showAudienceDialog, setShowAudienceDialog] = useState<boolean>(false);
+  const [scheduleType, setScheduleType] = useState<string>('now');
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
+  const [audienceName, setAudienceName] = useState<string>('');
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [detailCampaign, setDetailCampaign] = useState<BroadcastCampaign | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState<boolean>(false);
+  const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
+  const [editingCampaign, setEditingCampaign] = useState<BroadcastCampaign | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const handleCreateCampaign = () => {
     if (!campaignName) {
@@ -165,11 +191,180 @@ const BroadcastCampaigns = () => {
       return;
     }
 
+    const newCampaign: BroadcastCampaign = {
+      id: Math.random().toString(36).substring(2, 11),
+      name: campaignName,
+      status: scheduleType === 'now' ? 'sending' : scheduledDate ? 'scheduled' : 'draft',
+      template: selectedTemplate || undefined,
+      audience: selectedAudience === 'all-customers' 
+        ? 'All Customers' 
+        : selectedAudience === 'new-customers'
+        ? 'New Customers'
+        : selectedAudience === 'premium'
+        ? 'Premium Members'
+        : 'Inactive Users',
+      sent: scheduleType === 'now' ? Math.floor(Math.random() * 500) : 0,
+      delivered: 0,
+      read: 0,
+      responded: 0,
+      scheduled: scheduledDate?.toISOString() || '',
+    };
+
+    setCampaigns([newCampaign, ...campaigns]);
+    resetForm();
+
     toast({
-      title: "Campaign created",
-      description: "Your broadcast campaign has been created as a draft",
+      title: scheduleType === 'now' ? "Campaign sending" : "Campaign created",
+      description: scheduleType === 'now' 
+        ? "Your broadcast campaign is now being sent to the selected audience" 
+        : scheduledDate 
+        ? `Your campaign is scheduled for ${scheduledDate.toLocaleString()}` 
+        : "Your broadcast campaign has been created as a draft",
     });
   };
+
+  const resetForm = () => {
+    setCampaignName('');
+    setSelectedTemplate('');
+    setSelectedAudience('');
+    setMessageContent('');
+    setScheduleType('now');
+    setScheduledDate(undefined);
+    setMediaFile(null);
+  };
+
+  const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setMediaFile(file);
+    }
+  };
+
+  const handleRemoveMedia = () => {
+    setMediaFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCreateAudience = () => {
+    if (!audienceName) {
+      toast({
+        title: "Missing information",
+        description: "Please provide an audience name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Audience created",
+      description: `${audienceName} has been created successfully`,
+    });
+    
+    setShowAudienceDialog(false);
+    setAudienceName('');
+  };
+
+  const handleViewCampaignDetails = (campaign: BroadcastCampaign) => {
+    setDetailCampaign(campaign);
+    setShowDetailDialog(true);
+  };
+
+  const handleEditCampaign = (campaign: BroadcastCampaign) => {
+    setEditingCampaign(campaign);
+    // Set form values based on the campaign
+    setCampaignName(campaign.name);
+    setSelectedTemplate(campaign.template || '');
+    setSelectedAudience(
+      campaign.audience === 'All Customers' 
+        ? 'all-customers' 
+        : campaign.audience === 'New Customers'
+        ? 'new-customers'
+        : campaign.audience === 'Premium Members'
+        ? 'premium'
+        : 'inactive'
+    );
+    setScheduleType(campaign.scheduled ? 'schedule' : 'now');
+    setScheduledDate(campaign.scheduled ? new Date(campaign.scheduled) : undefined);
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateCampaign = () => {
+    if (!editingCampaign) return;
+    
+    const updatedCampaigns = campaigns.map(campaign => {
+      if (campaign.id === editingCampaign.id) {
+        return {
+          ...campaign,
+          name: campaignName,
+          template: selectedTemplate || undefined,
+          audience: selectedAudience === 'all-customers' 
+            ? 'All Customers' 
+            : selectedAudience === 'new-customers'
+            ? 'New Customers'
+            : selectedAudience === 'premium'
+            ? 'Premium Members'
+            : 'Inactive Users',
+          status: scheduleType === 'now' ? 'sending' : scheduledDate ? 'scheduled' : 'draft',
+          scheduled: scheduledDate?.toISOString() || '',
+        };
+      }
+      return campaign;
+    });
+    
+    setCampaigns(updatedCampaigns);
+    setShowEditDialog(false);
+    resetForm();
+    setEditingCampaign(null);
+    
+    toast({
+      title: "Campaign updated",
+      description: "Your campaign has been updated successfully",
+    });
+  };
+
+  const handleDeleteCampaign = (campaignId: string) => {
+    setCampaignToDelete(campaignId);
+  };
+
+  const confirmDeleteCampaign = () => {
+    if (campaignToDelete) {
+      setCampaigns(campaigns.filter(campaign => campaign.id !== campaignToDelete));
+      setCampaignToDelete(null);
+      
+      toast({
+        title: "Campaign deleted",
+        description: "The campaign has been deleted successfully",
+      });
+    }
+  };
+
+  const handleSendNow = (campaignId: string) => {
+    const updatedCampaigns = campaigns.map(campaign => {
+      if (campaign.id === campaignId) {
+        return {
+          ...campaign,
+          status: 'sending',
+          scheduled: '',
+          sent: Math.floor(Math.random() * 500),
+        };
+      }
+      return campaign;
+    });
+    
+    setCampaigns(updatedCampaigns);
+    
+    toast({
+      title: "Campaign sending",
+      description: "Your campaign is now being sent to the selected audience",
+    });
+  };
+
+  const filteredCampaigns = campaigns.filter(campaign => 
+    campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.audience.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -304,19 +499,30 @@ const BroadcastCampaigns = () => {
                     />
                     
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleMediaUpload}
+                        className="hidden"
+                        accept="image/*,video/*,application/pdf"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
                         <Image className="h-4 w-4 mr-2" />
-                        Add Image
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Video className="h-4 w-4 mr-2" />
-                        Add Video
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <File className="h-4 w-4 mr-2" />
-                        Add Document
+                        Add Media
                       </Button>
                     </div>
+                    
+                    {mediaFile && (
+                      <FilePreview 
+                        file={mediaFile}
+                        type={mediaFile.type.startsWith('image/') ? 'image' : 'file'}
+                        onRemove={handleRemoveMedia}
+                      />
+                    )}
                   </TabsContent>
                 </Tabs>
               </div>
@@ -365,8 +571,11 @@ const BroadcastCampaigns = () => {
               
               <div className="space-y-2">
                 <Label htmlFor="schedule">Schedule</Label>
-                <div className="flex gap-2">
-                  <Select defaultValue="now">
+                <div className="space-y-2">
+                  <Select 
+                    value={scheduleType}
+                    onValueChange={setScheduleType}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="When to send" />
                     </SelectTrigger>
@@ -375,7 +584,13 @@ const BroadcastCampaigns = () => {
                       <SelectItem value="schedule">Schedule for later</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input type="datetime-local" disabled className="flex-1" />
+                  
+                  {scheduleType === 'schedule' && (
+                    <DateTimePicker 
+                      date={scheduledDate} 
+                      setDate={setScheduledDate}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -403,46 +618,24 @@ const BroadcastCampaigns = () => {
               </TabsList>
               
               <TabsContent value="upload" className="space-y-4 py-4">
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Drag and drop your CSV file here, or click to browse
-                  </p>
-                  <Button variant="outline" size="sm" className="mt-4">
-                    Choose File
-                  </Button>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  <p>Your CSV should include the following columns:</p>
-                  <ul className="list-disc list-inside mt-2">
-                    <li>Name (required)</li>
-                    <li>Phone (required, with country code)</li>
-                    <li>Email (optional)</li>
-                    <li>Custom Variables (optional)</li>
-                  </ul>
-                </div>
+                <AudienceUploader />
               </TabsContent>
               
               <TabsContent value="criteria" className="space-y-4 py-4">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="audience-name">Audience Name</Label>
-                    <Input id="audience-name" placeholder="e.g., Active Premium Customers" />
+                    <Input 
+                      id="audience-name" 
+                      placeholder="e.g., Active Premium Customers" 
+                      value={audienceName}
+                      onChange={(e) => setAudienceName(e.target.value)}
+                    />
                   </div>
                   
                   <div className="space-y-2">
                     <Label>Filter by tags</Label>
-                    <div className="flex flex-wrap gap-2">
-                      <div className="bg-primary/10 text-primary text-sm px-3 py-1 rounded-full">
-                        Premium
-                      </div>
-                      <div className="bg-primary/10 text-primary text-sm px-3 py-1 rounded-full">
-                        Active
-                      </div>
-                      <div className="border border-dashed rounded-full px-3 py-1 text-sm text-muted-foreground">
-                        + Add Tag
-                      </div>
-                    </div>
+                    <AudienceUploader />
                   </div>
                   
                   <div className="space-y-2">
@@ -466,7 +659,149 @@ const BroadcastCampaigns = () => {
               <Button variant="outline" onClick={() => setShowAudienceDialog(false)}>
                 Cancel
               </Button>
-              <Button>Create Audience</Button>
+              <Button onClick={handleCreateAudience}>Create Audience</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Campaign Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit Campaign</DialogTitle>
+              <DialogDescription>
+                Modify your campaign details below.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-4">
+              {/* Same content as create dialog, but for editing */}
+              <div className="space-y-2">
+                <Label htmlFor="campaign-name-edit">Campaign Name</Label>
+                <Input
+                  id="campaign-name-edit"
+                  placeholder="e.g., Summer Promotion 2023"
+                  value={campaignName}
+                  onChange={(e) => setCampaignName(e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <Label className="mb-2 block">Message Content</Label>
+                <Tabs defaultValue="template">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="template">Use Template</TabsTrigger>
+                    <TabsTrigger value="custom">Custom Message</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="template" className="space-y-4 py-4">
+                    <Select 
+                      value={selectedTemplate} 
+                      onValueChange={setSelectedTemplate}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="welcome">Welcome Message</SelectItem>
+                        <SelectItem value="promotion">Promotion Announcement</SelectItem>
+                        <SelectItem value="feedback">Feedback Request</SelectItem>
+                        <SelectItem value="reminder">Appointment Reminder</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {selectedTemplate && (
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm">Template Preview</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="bg-gray-50 p-3 rounded-md">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="h-4 w-4 text-primary" />
+                              <span className="text-sm font-medium">
+                                {selectedTemplate === 'welcome' 
+                                  ? 'Welcome Message' 
+                                  : selectedTemplate === 'promotion' 
+                                  ? 'Promotion Announcement' 
+                                  : selectedTemplate === 'feedback' 
+                                  ? 'Feedback Request' 
+                                  : 'Appointment Reminder'}
+                              </span>
+                            </div>
+                            <p className="text-sm">
+                              {selectedTemplate === 'welcome' 
+                                ? "Hello {{1}}, welcome to our service! We're excited to have you onboard."
+                                : selectedTemplate === 'promotion' 
+                                ? "Great news, {{1}}! We have a special offer just for you: {{2}} off your next purchase."
+                                : selectedTemplate === 'feedback' 
+                                ? "Hi {{1}}, we'd love to hear your feedback about your recent experience with us."
+                                : "Reminder: You have an appointment scheduled for {{1}} at {{2}}. Reply YES to confirm."}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="custom" className="space-y-4 py-4">
+                    <Textarea
+                      placeholder="Type your message here..."
+                      className="min-h-[120px]"
+                      value={messageContent}
+                      onChange={(e) => setMessageContent(e.target.value)}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="audience-edit">Audience</Label>
+                <Select
+                  value={selectedAudience}
+                  onValueChange={setSelectedAudience}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select audience" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-customers">All Customers (2,548)</SelectItem>
+                    <SelectItem value="new-customers">New Customers (489)</SelectItem>
+                    <SelectItem value="premium">Premium Members (356)</SelectItem>
+                    <SelectItem value="inactive">Inactive Users (712)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="schedule-edit">Schedule</Label>
+                <div className="space-y-2">
+                  <Select 
+                    value={scheduleType}
+                    onValueChange={setScheduleType}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="When to send" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="now">Send immediately</SelectItem>
+                      <SelectItem value="schedule">Schedule for later</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {scheduleType === 'schedule' && (
+                    <DateTimePicker 
+                      date={scheduledDate} 
+                      setDate={setScheduledDate}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+              <Button onClick={handleUpdateCampaign}>Update Campaign</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -479,6 +814,8 @@ const BroadcastCampaigns = () => {
             <Input
               placeholder="Search campaigns..."
               className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           
@@ -489,7 +826,7 @@ const BroadcastCampaigns = () => {
         
         <div className="flex items-center gap-2">
           <p className="text-sm text-muted-foreground">
-            Showing <b>4</b> of <b>4</b> campaigns
+            Showing <b>{filteredCampaigns.length}</b> of <b>{campaigns.length}</b> campaigns
           </p>
         </div>
       </div>
@@ -513,7 +850,7 @@ const BroadcastCampaigns = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {campaigns.map((campaign) => (
+              {filteredCampaigns.map((campaign) => (
                 <TableRow key={campaign.id}>
                   <TableCell>
                     <div className="flex flex-col">
@@ -564,22 +901,25 @@ const BroadcastCampaigns = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewCampaignDetails(campaign)}>
                           <Eye className="mr-2 h-4 w-4" />
                           View Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditCampaign(campaign)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit Campaign
                         </DropdownMenuItem>
                         {campaign.status === 'scheduled' && (
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSendNow(campaign.id)}>
                             <Send className="mr-2 h-4 w-4" />
                             Send Now
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem 
+                          className="text-red-600" 
+                          onClick={() => handleDeleteCampaign(campaign.id)}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
@@ -592,6 +932,32 @@ const BroadcastCampaigns = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <CampaignDetail 
+        campaign={detailCampaign} 
+        open={showDetailDialog} 
+        onClose={() => setShowDetailDialog(false)} 
+      />
+
+      <AlertDialog open={!!campaignToDelete} onOpenChange={() => setCampaignToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this campaign? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteCampaign}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

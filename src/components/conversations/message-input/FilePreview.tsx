@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 interface FilePreviewProps {
   file: File;
@@ -29,6 +30,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, type, onRemove }) => {
         size="sm" 
         onClick={onRemove}
       >
+        <X className="h-4 w-4" />
         Remove
       </Button>
     </div>
