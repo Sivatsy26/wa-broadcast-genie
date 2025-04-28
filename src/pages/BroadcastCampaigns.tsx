@@ -58,13 +58,9 @@ import {
   Search,
   Upload,
   Image,
-  File,
-  Video,
   Send,
   Clock,
   CheckCircle,
-  XCircle,
-  Tag,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -81,11 +77,6 @@ import { AudienceUploader } from "@/components/broadcast/AudienceUploader";
 import { CampaignDetail } from "@/components/broadcast/CampaignDetail";
 import FilePreview from "@/components/conversations/message-input/FilePreview";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from "@/components/ui/popover";
 
 export interface BroadcastCampaign {
   id: string;
@@ -98,7 +89,6 @@ export interface BroadcastCampaign {
   read: number;
   responded: number;
   scheduled: string;
-  tags?: string[];
 }
 
 const initialCampaigns: BroadcastCampaign[] = [
@@ -113,7 +103,6 @@ const initialCampaigns: BroadcastCampaign[] = [
     read: 1890,
     responded: 312,
     scheduled: '2023-06-15T09:00:00Z',
-    tags: ['promotion', 'summer'],
   },
   {
     id: '2',
@@ -126,7 +115,6 @@ const initialCampaigns: BroadcastCampaign[] = [
     read: 800,
     responded: 95,
     scheduled: '2023-06-20T14:30:00Z',
-    tags: ['product', 'launch'],
   },
   {
     id: '3',
@@ -139,7 +127,6 @@ const initialCampaigns: BroadcastCampaign[] = [
     read: 0,
     responded: 0,
     scheduled: '2023-06-25T10:00:00Z',
-    tags: ['survey', 'feedback'],
   },
   {
     id: '4',
@@ -151,7 +138,6 @@ const initialCampaigns: BroadcastCampaign[] = [
     read: 0,
     responded: 0,
     scheduled: '',
-    tags: ['holiday'],
   },
 ];
 
@@ -174,13 +160,6 @@ const BroadcastCampaigns = () => {
   const [editingCampaign, setEditingCampaign] = useState<BroadcastCampaign | null>(null);
   const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  
-  // Tag management states
-  const [campaignIdForTag, setCampaignIdForTag] = useState<string | null>(null);
-  const [showTagDialog, setShowTagDialog] = useState<boolean>(false);
-  const [tagInput, setTagInput] = useState<string>('');
-  const [campaignTags, setCampaignTags] = useState<string[]>([]);
-  const [newCampaignTags, setNewCampaignTags] = useState<string[]>([]);
 
   const handleCreateCampaign = () => {
     if (!campaignName) {
@@ -231,7 +210,6 @@ const BroadcastCampaigns = () => {
       read: 0,
       responded: 0,
       scheduled: scheduledDate?.toISOString() || '',
-      tags: newCampaignTags.length > 0 ? [...newCampaignTags] : undefined,
     };
 
     setCampaigns([newCampaign, ...campaigns]);
@@ -255,7 +233,6 @@ const BroadcastCampaigns = () => {
     setScheduleType('now');
     setScheduledDate(undefined);
     setMediaFile(null);
-    setNewCampaignTags([]);
   };
 
   const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -292,12 +269,12 @@ const BroadcastCampaigns = () => {
   };
 
   const handleViewCampaignDetails = (campaign: BroadcastCampaign) => {
-    setDetailCampaign(campaign);
+    setDetailCampaign({...campaign});
     setShowDetailDialog(true);
   };
 
   const handleEditCampaign = (campaign: BroadcastCampaign) => {
-    setEditingCampaign(campaign);
+    setEditingCampaign({...campaign});
     // Set form values based on the campaign
     setCampaignName(campaign.name);
     setSelectedTemplate(campaign.template || '');
@@ -312,7 +289,6 @@ const BroadcastCampaigns = () => {
     );
     setScheduleType(campaign.scheduled ? 'schedule' : 'now');
     setScheduledDate(campaign.scheduled ? new Date(campaign.scheduled) : undefined);
-    setNewCampaignTags(campaign.tags || []);
     setShowEditDialog(true);
   };
 
@@ -338,7 +314,6 @@ const BroadcastCampaigns = () => {
             : 'Inactive Users',
           status: statusValue,
           scheduled: scheduledDate?.toISOString() || '',
-          tags: newCampaignTags.length > 0 ? [...newCampaignTags] : undefined,
         };
       }
       return campaign;
@@ -392,66 +367,9 @@ const BroadcastCampaigns = () => {
     });
   };
 
-  // Tag management functions
-  const openTagDialog = (campaignId: string) => {
-    const campaign = campaigns.find(c => c.id === campaignId);
-    if (campaign) {
-      setCampaignIdForTag(campaignId);
-      setCampaignTags(campaign.tags || []);
-      setShowTagDialog(true);
-    }
-  };
-
-  const handleAddTag = () => {
-    if (tagInput.trim()) {
-      setCampaignTags([...campaignTags, tagInput.trim()]);
-      setTagInput('');
-    }
-  };
-
-  const handleAddNewCampaignTag = () => {
-    if (tagInput.trim()) {
-      setNewCampaignTags([...newCampaignTags, tagInput.trim()]);
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setCampaignTags(campaignTags.filter(tag => tag !== tagToRemove));
-  };
-
-  const handleRemoveNewTag = (tagToRemove: string) => {
-    setNewCampaignTags(newCampaignTags.filter(tag => tag !== tagToRemove));
-  };
-
-  const handleSaveTags = () => {
-    if (campaignIdForTag) {
-      const updatedCampaigns = campaigns.map(campaign => {
-        if (campaign.id === campaignIdForTag) {
-          return {
-            ...campaign,
-            tags: campaignTags.length > 0 ? [...campaignTags] : undefined
-          };
-        }
-        return campaign;
-      });
-      
-      setCampaigns(updatedCampaigns);
-      setShowTagDialog(false);
-      setCampaignIdForTag(null);
-      setCampaignTags([]);
-      
-      toast({
-        title: "Tags updated",
-        description: "Campaign tags have been updated successfully",
-      });
-    }
-  };
-
   const filteredCampaigns = campaigns.filter(campaign => 
     campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    campaign.audience.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (campaign.tags && campaign.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
+    campaign.audience.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusColor = (status: string) => {
@@ -642,42 +560,6 @@ const BroadcastCampaigns = () => {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label>Tags (optional)</Label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {newCampaignTags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="px-2 py-1 gap-1">
-                      {tag}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-4 w-4 p-0 ml-1 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleRemoveNewTag(tag)}
-                      >
-                        <XCircle className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add a tag"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    className="flex-1"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddNewCampaignTag();
-                      }
-                    }}
-                  />
-                  <Button variant="outline" onClick={handleAddNewCampaignTag}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
               
               <div className="space-y-2">
                 <Label htmlFor="whatsapp-account">Send From</Label>
@@ -758,11 +640,6 @@ const BroadcastCampaigns = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Filter by tags</Label>
-                    <AudienceUploader />
-                  </div>
-                  
-                  <div className="space-y-2">
                     <Label>Filter by activity</Label>
                     <Select defaultValue="active-90">
                       <SelectTrigger>
@@ -784,68 +661,6 @@ const BroadcastCampaigns = () => {
                 Cancel
               </Button>
               <Button onClick={handleCreateAudience}>Create Audience</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Tag management dialog */}
-        <Dialog open={showTagDialog} onOpenChange={setShowTagDialog}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Manage Tags</DialogTitle>
-              <DialogDescription>
-                Add or remove tags for this campaign.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4 py-4">
-              <div className="flex flex-wrap gap-2 mb-2">
-                {campaignTags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="px-2 py-1 gap-1">
-                    {tag}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 ml-1 text-muted-foreground hover:text-foreground"
-                      onClick={() => handleRemoveTag(tag)}
-                    >
-                      <XCircle className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-                {campaignTags.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No tags yet. Add some below.</p>
-                )}
-              </div>
-              
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add a tag"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  className="flex-1"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
-                  }}
-                />
-                <Button variant="outline" onClick={handleAddTag}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                setShowTagDialog(false);
-                setCampaignIdForTag(null);
-                setCampaignTags([]);
-              }}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveTags}>Save Tags</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -958,42 +773,6 @@ const BroadcastCampaigns = () => {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label>Tags (optional)</Label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {newCampaignTags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="px-2 py-1 gap-1">
-                      {tag}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-4 w-4 p-0 ml-1 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleRemoveNewTag(tag)}
-                      >
-                        <XCircle className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add a tag"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    className="flex-1"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddNewCampaignTag();
-                      }
-                    }}
-                  />
-                  <Button variant="outline" onClick={handleAddNewCampaignTag}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
               
               <div className="space-y-2">
                 <Label htmlFor="schedule-edit">Schedule</Label>
@@ -1067,7 +846,6 @@ const BroadcastCampaigns = () => {
                 <TableHead>Campaign</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Audience</TableHead>
-                <TableHead>Tags</TableHead>
                 <TableHead className="text-right">Metrics</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -1102,37 +880,6 @@ const BroadcastCampaigns = () => {
                       <span className="text-sm">{campaign.audience}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    {campaign.tags && campaign.tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {campaign.tags.slice(0, 2).map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {campaign.tags.length > 2 && (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Badge variant="outline" className="text-xs cursor-pointer">
-                                +{campaign.tags.length - 2} more
-                              </Badge>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-2">
-                              <div className="flex flex-wrap gap-1">
-                                {campaign.tags.slice(2).map((tag) => (
-                                  <Badge key={tag} variant="outline" className="text-xs">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">No tags</span>
-                    )}
-                  </TableCell>
                   <TableCell className="text-right">
                     <div className="text-sm">
                       {campaign.status !== 'draft' ? (
@@ -1162,10 +909,6 @@ const BroadcastCampaigns = () => {
                         <DropdownMenuItem onClick={() => handleEditCampaign(campaign)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit Campaign
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openTagDialog(campaign.id)}>
-                          <Tag className="mr-2 h-4 w-4" />
-                          Manage Tags
                         </DropdownMenuItem>
                         {campaign.status === 'scheduled' && (
                           <DropdownMenuItem onClick={() => handleSendNow(campaign.id)}>

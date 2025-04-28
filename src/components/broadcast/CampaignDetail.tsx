@@ -23,7 +23,6 @@ import {
   Eye,
   FileText,
   ChevronRight,
-  Tag,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -75,18 +74,6 @@ export function CampaignDetail({ campaign, open, onClose }: CampaignDetailProps)
               </span>
             )}
           </div>
-          <DialogDescription>
-            {campaign.tags && campaign.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {campaign.tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="bg-primary/10">
-                    <Tag className="h-3 w-3 mr-1" />
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="w-full">
