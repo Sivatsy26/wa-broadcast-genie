@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import {
   Card,
@@ -400,6 +399,11 @@ const BroadcastCampaigns = () => {
       default:
         return null;
     }
+  };
+
+  const handleCampaignClick = (campaign: BroadcastCampaign) => {
+    setDetailCampaign(structuredClone(campaign));
+    setShowDetailDialog(true);
   };
 
   return (
@@ -847,15 +851,18 @@ const BroadcastCampaigns = () => {
                 <TableHead>Status</TableHead>
                 <TableHead>Audience</TableHead>
                 <TableHead className="text-right">Metrics</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredCampaigns.map((campaign) => (
-                <TableRow key={campaign.id}>
+                <TableRow 
+                  key={campaign.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleCampaignClick(campaign)}
+                >
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium">{campaign.name}</span>
+                      <span className="font-medium text-primary">{campaign.name}</span>
                       <span className="text-xs text-muted-foreground">
                         {campaign.template || 'Custom Message'} • {' '}
                         {campaign.scheduled ? 
@@ -894,39 +901,6 @@ const BroadcastCampaigns = () => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleViewCampaignDetails(campaign)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditCampaign(campaign)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Campaign
-                        </DropdownMenuItem>
-                        {campaign.status === 'scheduled' && (
-                          <DropdownMenuItem onClick={() => handleSendNow(campaign.id)}>
-                            <Send className="mr-2 h-4 w-4" />
-                            Send Now
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          className="text-red-600" 
-                          onClick={() => handleDeleteCampaign(campaign.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -937,7 +911,12 @@ const BroadcastCampaigns = () => {
       <CampaignDetail 
         campaign={detailCampaign} 
         open={showDetailDialog} 
-        onClose={() => setShowDetailDialog(false)} 
+        onClose={() => {
+          setShowDetailDialog(false);
+          setDetailCampaign(null);
+        }}
+        onEdit={handleEditCampaign}
+        onDelete={handleDeleteCampaign}
       />
 
       <AlertDialog open={!!campaignToDelete} onOpenChange={() => setCampaignToDelete(null)}>

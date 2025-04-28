@@ -6,6 +6,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Card,
@@ -22,19 +23,23 @@ import {
   MessageCircle,
   Eye,
   FileText,
-  ChevronRight,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { BroadcastCampaign } from "../../pages/BroadcastCampaigns";
 
 interface CampaignDetailProps {
   campaign: BroadcastCampaign | null;
   open: boolean;
   onClose: () => void;
+  onEdit: (campaign: BroadcastCampaign) => void;
+  onDelete: (campaignId: string) => void;
 }
 
-export function CampaignDetail({ campaign, open, onClose }: CampaignDetailProps) {
+export function CampaignDetail({ campaign, open, onClose, onEdit, onDelete }: CampaignDetailProps) {
   if (!campaign) return null;
 
   const getStatusColor = (status: string) => {
@@ -56,23 +61,45 @@ export function CampaignDetail({ campaign, open, onClose }: CampaignDetailProps)
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{campaign.name}</DialogTitle>
-          <div className="flex items-center gap-2">
-            <Badge className={`${getStatusColor(campaign.status)} capitalize`}>
-              {campaign.status}
-            </Badge>
-            {campaign.scheduled && (
-              <span className="text-sm flex items-center">
-                <Calendar className="h-3.5 w-3.5 mr-1" />
-                {new Date(campaign.scheduled).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                  hour: 'numeric',
-                  minute: 'numeric',
-                })}
-              </span>
-            )}
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <DialogTitle className="text-2xl">{campaign.name}</DialogTitle>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge className={`${getStatusColor(campaign.status)} capitalize`}>
+                  {campaign.status}
+                </Badge>
+                {campaign.scheduled && (
+                  <span className="text-sm flex items-center">
+                    <Calendar className="h-3.5 w-3.5 mr-1" />
+                    {new Date(campaign.scheduled).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: 'numeric',
+                    })}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(campaign)}
+              >
+                <Pencil className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => onDelete(campaign.id)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
