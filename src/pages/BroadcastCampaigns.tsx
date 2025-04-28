@@ -191,10 +191,14 @@ const BroadcastCampaigns = () => {
       return;
     }
 
+    const statusValue: 'sending' | 'scheduled' | 'draft' = 
+      scheduleType === 'now' ? 'sending' : 
+      scheduledDate ? 'scheduled' : 'draft';
+
     const newCampaign: BroadcastCampaign = {
       id: Math.random().toString(36).substring(2, 11),
       name: campaignName,
-      status: scheduleType === 'now' ? 'sending' : scheduledDate ? 'scheduled' : 'draft',
+      status: statusValue,
       template: selectedTemplate || undefined,
       audience: selectedAudience === 'all-customers' 
         ? 'All Customers' 
@@ -293,6 +297,10 @@ const BroadcastCampaigns = () => {
   const handleUpdateCampaign = () => {
     if (!editingCampaign) return;
     
+    const statusValue: 'sending' | 'scheduled' | 'draft' = 
+      scheduleType === 'now' ? 'sending' : 
+      scheduledDate ? 'scheduled' : 'draft';
+    
     const updatedCampaigns = campaigns.map(campaign => {
       if (campaign.id === editingCampaign.id) {
         return {
@@ -306,7 +314,7 @@ const BroadcastCampaigns = () => {
             : selectedAudience === 'premium'
             ? 'Premium Members'
             : 'Inactive Users',
-          status: scheduleType === 'now' ? 'sending' : scheduledDate ? 'scheduled' : 'draft',
+          status: statusValue,
           scheduled: scheduledDate?.toISOString() || '',
         };
       }
@@ -345,7 +353,7 @@ const BroadcastCampaigns = () => {
       if (campaign.id === campaignId) {
         return {
           ...campaign,
-          status: 'sending',
+          status: 'sending' as const,
           scheduled: '',
           sent: Math.floor(Math.random() * 500),
         };
