@@ -108,21 +108,21 @@ const SupportTab: React.FC<SupportTabProps> = ({ userRole }) => {
                 <div>
                   <h4 className="font-medium">How do I add team members?</h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Go to Settings > User Management and click the "Add User" button to invite team members.
+                    Go to Settings {'>>'} User Management and click the "Add User" button to invite team members.
                   </p>
                 </div>
                 
                 <div>
                   <h4 className="font-medium">How do I upgrade my subscription?</h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Go to Settings > Billing and select a different plan to upgrade your subscription.
+                    Go to Settings {'>>'} Billing and select a different plan to upgrade your subscription.
                   </p>
                 </div>
                 
                 <div>
                   <h4 className="font-medium">How do I connect my social accounts?</h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Navigate to Settings > Social Accounts and click the "Connect" button next to each platform you want to integrate.
+                    Navigate to Settings {'>>'} Social Accounts and click the "Connect" button next to each platform you want to integrate.
                   </p>
                 </div>
               </div>
