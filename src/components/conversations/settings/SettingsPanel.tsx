@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -637,7 +638,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ userRole }) => {
                       <p className="text-sm text-muted-foreground mt-1">Renews on May 15, 2023</p>
                     </div>
                     <div>
-                      <Badge className="bg-green-100 text-green-800">Active</Badge>
+                      <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">Active</div>
                     </div>
                   </div>
                 </div>
@@ -665,7 +666,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ userRole }) => {
                   <div className="border rounded-lg p-4 bg-primary/5 border-primary/20 shadow-sm">
                     <div className="flex justify-between items-center">
                       <h4 className="font-medium">Professional</h4>
-                      <Badge className="bg-primary/20 text-primary">Popular</Badge>
+                      <div className="bg-primary/20 text-primary px-2 py-1 rounded text-xs font-medium">Popular</div>
                     </div>
                     <p className="text-2xl font-bold mt-2">$99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                     <ul className="text-sm mt-4 space-y-2">
@@ -733,4 +734,131 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ userRole }) => {
                         <div>
                           <svg className="h-8 w-8" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                             <rect fill="#1A1F71" width="32" height="32" rx="4"/>
-                            <path d="M13.1 12.0001L10.5 20.0001H8L10.6 12.0001H13.1ZM24 20.0001H21.6L19.5 13.7001L18.3 18.4001C18.1 19.0001 17.7 20.0001 16.6 20.0001H14L13.9 19.8001C15 19.5001 15.8 19.0001 16.4 18.4001C16.7 18.1001 17 17.7001 17.1 17.2001L17.9 14.0001L19.6 20.0001H22L24.1 12.0001H21.7L20 18.2001L19.2 12.0001H17.1L15.6 16.7001L15.1 18.0001C15 18.2001 14.9 18.2001 14.7 18.2001C14.2 18.2001 13.2 16.9001 13.2 16.9001L13.5 15.9001C13.6 15.4001 13.9 14.7001 15.2 14.7001C15.9 14.7001 16.5 15.0001 16.7 15.7001L17.2 12.5001C16.7 12.2001 16 12.0001 15.2 12.0001C13.4 12.0001 12.3 13.1001 11.7 14.6001L11.1 16.4001C11
+                            <path d="M13.1 12.0001L10.5 20.0001H8L10.6 12.0001H13.1ZM24 20.0001H21.6L19.5 13.7001L18.3 18.4001C18.1 19.0001 17.7 20.0001 16.6 20.0001H14L13.9 19.8001C15 19.5001 15.8 19.0001 16.4 18.4001C16.7 18.1001 17 17.7001 17.1 17.2001L17.9 14.0001L19.6 20.0001H22L24.1 12.0001H21.7L20 18.2001L19.2 12.0001H17.1L15.6 16.7001L15.1 18.0001C15 18.2001 14.9 18.2001 14.7 18.2001C14.2 18.2001 13.2 16.9001 13.2 16.9001L13.5 15.9001C13.6 15.4001 13.9 14.7001 15.2 14.7001C15.9 14.7001 16.5 15.0001 16.7 15.7001L17.2 12.5001C16.7 12.2001 16 12.0001 15.2 12.0001C13.4 12.0001 12.3 13.1001 11.7 14.6001L11.1 16.4001C11 16.7001 10.9 16.9001 10.9 17.2001C10.9 17.4001 10.9 17.5001 11 17.7001C11.2 18.8001 12.5 20.2001 14.2 20.2001H14.3C15.3 20.2001 16 19.8001 16.4 19.3001L16.5 20.0001H19.1L19 19.5001C19 19.0001 19 18.3001 19.1 17.7001L20.8 12.0001H24Z" fill="white"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+                
+                <div className="border-t mt-6 pt-6">
+                  <h4 className="font-medium mb-4">Add New Payment Method</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="card-number">Card Number</Label>
+                      <Input id="card-number" placeholder="**** **** **** ****" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="expiry">Expiry Date</Label>
+                        <Input id="expiry" placeholder="MM/YY" />
+                      </div>
+                      <div>
+                        <Label htmlFor="cvc">CVC</Label>
+                        <Input id="cvc" placeholder="***" />
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="card-name">Name on Card</Label>
+                      <Input id="card-name" placeholder="Enter your name as it appears on the card" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="billing-address">Billing Address</Label>
+                      <textarea
+                        id="billing-address"
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        placeholder="Enter your billing address"
+                        defaultValue={billingAddress}
+                      ></textarea>
+                    </div>
+                  </div>
+                  <Button className="mt-4" onClick={handleSaveBilling}>
+                    Add Payment Method
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg border">
+                <h3 className="text-lg font-medium mb-4">Billing History</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4">Date</th>
+                        <th className="text-left py-3 px-4">Description</th>
+                        <th className="text-left py-3 px-4">Amount</th>
+                        <th className="text-left py-3 px-4">Status</th>
+                        <th className="text-right py-3 px-4">Invoice</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="py-3 px-4">May 1, 2023</td>
+                        <td className="py-3 px-4">Professional Plan - Monthly</td>
+                        <td className="py-3 px-4">$99.00</td>
+                        <td className="py-3 px-4">
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">Paid</span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <Button variant="ghost" size="sm">
+                            <FileText className="h-4 w-4 mr-1" />
+                            PDF
+                          </Button>
+                        </td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-3 px-4">Apr 1, 2023</td>
+                        <td className="py-3 px-4">Professional Plan - Monthly</td>
+                        <td className="py-3 px-4">$99.00</td>
+                        <td className="py-3 px-4">
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">Paid</span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <Button variant="ghost" size="sm">
+                            <FileText className="h-4 w-4 mr-1" />
+                            PDF
+                          </Button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {activeTab === "appearance" && (
+            <AppearanceTab />
+          )}
+          
+          {activeTab === "notifications" && (
+            <NotificationsTab />
+          )}
+          
+          {activeTab === "templates" && (
+            <TemplatesTab />
+          )}
+          
+          {activeTab === "data-management" && (
+            <DataManagementTab />
+          )}
+          
+          {activeTab === "automated-responses" && (
+            <AutomatedResponsesTab />
+          )}
+          
+          {activeTab === "ai-settings" && (
+            <AISettingsTab />
+          )}
+          
+          {activeTab === "disappearing-messages" && (
+            <DisappearingMessagesTab />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsPanel;
