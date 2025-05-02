@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -40,6 +40,7 @@ interface SettingsPanelProps {
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({ userRole }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("profile");
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -134,37 +135,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ userRole }) => {
     });
   };
 
-  const handleAddUser = () => {
-    const newUserRole = userRole === 'super-admin' ? 
-      window.prompt('Enter role for new user (super-admin, white-label, admin, user):') : 
-      userRole === 'white-label' ? 
-        window.prompt('Enter role for new user (admin, user):') : 
-        'user';
-    
-    if (newUserRole) {
-      const newUser = {
-        id: users.length + 1,
-        name: 'New User',
-        email: 'new.user@example.com',
-        role: newUserRole,
-        lastActive: 'Never'
-      };
-      
-      setUsers([...users, newUser]);
-      
-      toast({
-        title: "User added",
-        description: `A new ${newUserRole} user has been added.`
-      });
-    }
-  };
-  
-  const handleDeleteUser = (id: number) => {
-    setUsers(users.filter(user => user.id !== id));
-    toast({
-      title: "User deleted",
-      description: "The user has been removed from your account."
-    });
+  const navigateToUserManagement = () => {
+    navigate('/users');
   };
   
   const handleSaveWhiteLabel = () => {
@@ -501,99 +473,26 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ userRole }) => {
 
           {activeTab === "users" && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold">User Management</h2>
-                <p className="text-muted-foreground">Manage users and their permissions</p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg border">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-medium">Users</h3>
-                  <Button onClick={handleAddUser}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add User
-                  </Button>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold">User Management</h2>
+                  <p className="text-muted-foreground">Manage users and their permissions</p>
                 </div>
                 
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4">Name</th>
-                        <th className="text-left py-3 px-4">Email</th>
-                        <th className="text-left py-3 px-4">Role</th>
-                        <th className="text-left py-3 px-4">Last Active</th>
-                        <th className="text-right py-3 px-4">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((user) => (
-                        <tr key={user.id} className="border-b">
-                          <td className="py-3 px-4">{user.name}</td>
-                          <td className="py-3 px-4">{user.email}</td>
-                          <td className="py-3 px-4 capitalize">{user.role}</td>
-                          <td className="py-3 px-4">{user.lastActive}</td>
-                          <td className="py-3 px-4 text-right">
-                            <Button variant="ghost" size="sm">
-                              <Settings className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)}>
-                              <Trash className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <Button onClick={navigateToUserManagement}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add User
+                </Button>
               </div>
               
               <div className="bg-white p-6 rounded-lg border">
-                <h3 className="text-lg font-medium mb-4">Role Permissions</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Configure what actions different user roles can perform in your account
+                <p className="text-center py-6">
+                  Please use the full User Management page for comprehensive user administration including adding, editing, and managing users with detailed information.
                 </p>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Admin</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Manage Users</span>
-                        <Switch defaultChecked={true} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Manage Billing</span>
-                        <Switch defaultChecked={true} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Access API Keys</span>
-                        <Switch defaultChecked={true} />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium mb-2">User</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Create Campaigns</span>
-                        <Switch defaultChecked={true} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">View Analytics</span>
-                        <Switch defaultChecked={true} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Manage Social Accounts</span>
-                        <Switch defaultChecked={true} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-6">
-                  <Button>Save Permissions</Button>
+                <div className="flex justify-center">
+                  <Button onClick={navigateToUserManagement}>
+                    Go to User Management
+                  </Button>
                 </div>
               </div>
             </div>

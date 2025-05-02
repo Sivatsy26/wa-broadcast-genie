@@ -17,6 +17,7 @@ import TeamManagement from "./pages/TeamManagement";
 import Analytics from "./pages/Analytics";
 import Tickets from "./pages/Tickets";
 import Settings from "./pages/Settings";
+import UserManagement from "./pages/UserManagement";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/tickets" element={<Tickets />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/users" element={<UserManagement />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
