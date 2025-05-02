@@ -23,10 +23,11 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+    <BrowserRouter>
+      {/* Moved TooltipProvider inside BrowserRouter */}
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
         <Routes>
           <Route path="/" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
@@ -45,8 +46,8 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 
