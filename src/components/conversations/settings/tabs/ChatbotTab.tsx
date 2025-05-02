@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,7 @@ const ChatbotTab: React.FC<ChatbotTabProps> = ({ userRole }) => {
   const [aiModel, setAiModel] = useState("gpt-4");
   const [temperature, setTemperature] = useState("0.7");
   const [maxResponseTokens, setMaxResponseTokens] = useState("1024");
+  const [primaryColor, setPrimaryColor] = useState("#4f46e5");
   
   const [responses, setResponses] = useState([
     { id: 1, trigger: "pricing", response: "Our pricing starts at $29/month for the Basic plan, $99/month for Professional, and $299/month for Enterprise." },
