@@ -254,6 +254,7 @@ const Conversations = () => {
   const [selectedAccount, setSelectedAccount] = useState<string>("1");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string>('admin');
 
   const whatsappAccounts = [
     { id: "1", name: "Business Account", phone: "+1 (555) 123-4567" },
@@ -466,7 +467,7 @@ const Conversations = () => {
               <DialogHeader>
                 <DialogTitle>Conversation Settings</DialogTitle>
               </DialogHeader>
-              <SettingsPanel />
+              <SettingsPanel userRole={userRole} />
             </DialogContent>
           </Dialog>
         </div>
