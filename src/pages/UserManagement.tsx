@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Card,
@@ -294,13 +295,13 @@ const UserManagement = () => {
       return;
     }
     
-    // Create new user - ensure all required fields for UserProfile are provided
+    // Create new user with required properties
     const newUser: UserProfile = {
       id: Math.random().toString(36).substring(2, 9),
-      name: data.name, // Ensure name is always provided
-      email: data.email, // Ensure email is always provided
-      role: data.role, // Ensure role is always provided
-      status: data.status, // Ensure status is always provided
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      status: data.status,
       createdAt: new Date().toISOString(),
       addedBy: "Current User", // In a real app, this would be the current user's name
       company: data.company || undefined,
@@ -971,4 +972,352 @@ const UserManagement = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
                     {selectedUser.address1 && (
                       <div className="col-span-2">
-                        <p className="text-sm text-muted-
+                        <p className="text-sm text-muted-foreground">Address Line 1</p>
+                        <p className="font-medium">{selectedUser.address1}</p>
+                      </div>
+                    )}
+                    
+                    {selectedUser.address2 && (
+                      <div className="col-span-2">
+                        <p className="text-sm text-muted-foreground">Address Line 2</p>
+                        <p className="font-medium">{selectedUser.address2}</p>
+                      </div>
+                    )}
+                    
+                    {selectedUser.state && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">State</p>
+                        <p className="font-medium">{selectedUser.state}</p>
+                      </div>
+                    )}
+                    
+                    {selectedUser.country && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Country</p>
+                        <p className="font-medium">{selectedUser.country}</p>
+                      </div>
+                    )}
+                    
+                    {selectedUser.postalCode && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Postal Code</p>
+                        <p className="font-medium">{selectedUser.postalCode}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit User Dialog */}
+      <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user information
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...editUserForm}>
+            <form onSubmit={editUserForm.handleSubmit(handleUpdateUser)} className="space-y-6">
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative mb-4">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={avatarPreview || ""} />
+                    <AvatarFallback className="bg-primary/10">
+                      <User className="h-12 w-12 text-primary/80" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    className="absolute bottom-0 right-0"
+                    onClick={() => document.getElementById('avatar-upload-edit')?.click()}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <input
+                    id="avatar-upload-edit"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Upload a profile picture (Max 1MB)
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={editUserForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address *</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="john@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Company Inc." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Position</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Marketing Manager" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+1 555-123-4567" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>User Role *</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {getAvailableRoles().map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role === 'super-admin' ? 'Super Admin' :
+                               role === 'white-label' ? 'White Label' :
+                               role === 'admin' ? 'Admin' : 'User'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status *</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-2">Address Information (Optional)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editUserForm.control}
+                    name="address1"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address Line 1</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123 Main St" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="address2"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address Line 2</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Suite 500" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input placeholder="California" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Country</FormLabel>
+                        <FormControl>
+                          <Input placeholder="United States" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="postalCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Postal Code</FormLabel>
+                        <FormControl>
+                          <Input placeholder="90001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => {
+                  setIsEditUserDialogOpen(false);
+                  setSelectedUser(null);
+                  setAvatarPreview(null);
+                }}>
+                  Cancel
+                </Button>
+                <Button type="submit">Update User</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete User Dialog */}
+      <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this user? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedUser && (
+            <div className="flex items-center gap-3 py-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={selectedUser.avatar} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {selectedUser.name.split(' ').map(n => n[0]).join('')}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-medium">{selectedUser.name}</div>
+                <div className="text-sm text-muted-foreground">{selectedUser.email}</div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsDeleteUserDialogOpen(false);
+                setSelectedUser(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDeleteUser}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default UserManagement;
