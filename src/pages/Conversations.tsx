@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -465,7 +466,7 @@ const Conversations = () => {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[725px]">
               <DialogHeader>
-                <DialogTitle>Conversation Settings</DialogTitle>
+                <DialogTitle>AI Assistant Settings</DialogTitle>
               </DialogHeader>
               <SettingsPanel userRole={userRole} />
             </DialogContent>
