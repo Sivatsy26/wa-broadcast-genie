@@ -11,10 +11,10 @@ import ConversationHeader from '@/components/conversations/ConversationHeader';
 import NoConversation from '@/components/conversations/NoConversation';
 import { Conversation, Message } from '@/types/conversation';
 import { Bot, Users, Settings } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AIAssistantWidget from '@/components/conversations/AIAssistantWidget';
-import SettingsPanel from '@/components/conversations/settings/SettingsPanel';
+import AIAssistantSettings from '@/components/conversations/AIAssistantSettings';
 
 const conversations: Conversation[] = [
   {
@@ -252,9 +252,8 @@ const Conversations = () => {
   const [localMessages, setLocalMessages] = useState<Message[]>(messages);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [selectedAccount, setSelectedAccount] = useState<string>("1");
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string>('admin');
+  const [isAISettingsOpen, setIsAISettingsOpen] = useState(false);
 
   const whatsappAccounts = [
     { id: "1", name: "Business Account", phone: "+1 (555) 123-4567" },
@@ -453,23 +452,22 @@ const Conversations = () => {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="icon" onClick={() => setIsAIAssistantOpen(true)}>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => setIsAIAssistantOpen(!isAIAssistantOpen)} 
+            className={isAIAssistantOpen ? "bg-primary/10" : ""}
+          >
             <Bot className="h-4 w-4" />
           </Button>
           
-          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[725px]">
-              <DialogHeader>
-                <DialogTitle>Conversation Settings</DialogTitle>
-              </DialogHeader>
-              <SettingsPanel userRole={userRole} />
-            </DialogContent>
-          </Dialog>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => setIsAISettingsOpen(true)}
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -477,6 +475,12 @@ const Conversations = () => {
         isOpen={isAIAssistantOpen} 
         onClose={() => setIsAIAssistantOpen(false)} 
       />
+
+      <Dialog open={isAISettingsOpen} onOpenChange={setIsAISettingsOpen}>
+        <DialogContent className="sm:max-w-[725px]">
+          <AIAssistantSettings onClose={() => setIsAISettingsOpen(false)} />
+        </DialogContent>
+      </Dialog>
 
       <div className="flex flex-1 gap-4 h-[calc(100vh-13rem)] overflow-hidden">
         <ConversationList 
