@@ -18,6 +18,7 @@ import Analytics from "./pages/Analytics";
 import Tickets from "./pages/Tickets";
 import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/users" element={<UserManagement />} />
           </Route>
+          <Route path="/auth" element={<Auth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

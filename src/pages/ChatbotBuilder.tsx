@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -41,6 +42,7 @@ import {
   BarChart3,
   Pencil,
   Loader2,
+  LogIn,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -109,6 +111,7 @@ const templates: ChatbotTemplate[] = [
 ];
 
 const ChatbotBuilder = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { 
     chatbots, 
@@ -262,6 +265,10 @@ const ChatbotBuilder = () => {
     setDeleteChatbotData(null);
   };
 
+  const handleSignIn = () => {
+    navigate('/auth');
+  };
+
   if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
@@ -291,7 +298,10 @@ const ChatbotBuilder = () => {
           </CardHeader>
           <CardContent>
             <p className="mb-4">You need to be authenticated to use the Chatbot Builder.</p>
-            <Button>Sign In</Button>
+            <Button onClick={handleSignIn}>
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign In
+            </Button>
           </CardContent>
         </Card>
       </div>

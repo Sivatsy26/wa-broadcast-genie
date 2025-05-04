@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
@@ -7,7 +7,9 @@ import {
   Menu, 
   Settings, 
   User,
-  HelpCircle
+  HelpCircle,
+  LogOut,
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -18,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -26,12 +29,58 @@ interface HeaderProps {
 const Header = ({ toggleSidebar }: HeaderProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuth();
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setIsAuthenticated(!!session);
+      }
+    );
+    
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleNotificationClick = () => {
     toast({
       title: "Notifications",
       description: "No new notifications",
     });
+  };
+  
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Signed out",
+        description: "You have been successfully logged out",
+      });
+      
+      navigate('/');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -83,18 +132,37 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/profile')}>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/settings')}>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/login')}>
-              Logout
-            </DropdownMenuItem>
+            {isAuthenticated ? (
+              <>
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+                  {isLoggingOut ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <span>Logging out...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Logout</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <DropdownMenuItem onClick={() => navigate('/auth')}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Sign In</span>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
