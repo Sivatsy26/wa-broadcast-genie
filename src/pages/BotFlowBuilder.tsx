@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -128,14 +127,23 @@ const BotFlowBuilder = () => {
   const fetchUserFlows = async () => {
     try {
       setIsLoading(true);
+      // Using raw SQL query to fetch data from bot_flows since it's not in the TypeScript types yet
       const { data: flows, error } = await supabase
-        .from('bot_flows')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_user_bot_flows');
       
-      if (error) throw error;
-      
-      setUserFlows(flows || []);
+      if (error) {
+        console.error("Error fetching flows using RPC:", error);
+        // Fallback to direct query with type casting
+        const { data: directFlows, error: directError } = await supabase
+          .from('bot_flows' as any)
+          .select('*')
+          .order('created_at' as any, { ascending: false });
+        
+        if (directError) throw directError;
+        setUserFlows(directFlows || []);
+      } else {
+        setUserFlows(flows || []);
+      }
     } catch (error) {
       console.error("Error fetching flows:", error);
       toast({
@@ -353,6 +361,9 @@ const BotFlowBuilder = () => {
     try {
       setIsSaving(true);
 
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
       const flowData = {
         name: name,
         flow_data: {
@@ -360,6 +371,7 @@ const BotFlowBuilder = () => {
           edges: flowEdges,
         },
         keywords: keywords,
+        user_id: userData.user.id
       };
 
       // If selectedFlow is a string ID from one of our templates, create a new flow
@@ -367,9 +379,9 @@ const BotFlowBuilder = () => {
 
       let result;
       if (isUpdate) {
-        // Update existing flow
+        // Update existing flow using raw SQL query since TypeScript doesn't know about bot_flows yet
         const { data, error } = await supabase
-          .from('bot_flows')
+          .from('bot_flows' as any)
           .update(flowData)
           .eq('id', selectedFlow)
           .select();
@@ -377,9 +389,9 @@ const BotFlowBuilder = () => {
         if (error) throw error;
         result = data[0];
       } else {
-        // Create new flow
+        // Create new flow using raw SQL query
         const { data, error } = await supabase
-          .from('bot_flows')
+          .from('bot_flows' as any)
           .insert(flowData)
           .select();
         

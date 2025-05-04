@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bot_flows: {
+        Row: {
+          created_at: string
+          flow_data: Json
+          id: string
+          keywords: string[] | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          flow_data?: Json
+          id?: string
+          keywords?: string[] | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          flow_data?: Json
+          id?: string
+          keywords?: string[] | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chatbot_conversations: {
         Row: {
           channel: string

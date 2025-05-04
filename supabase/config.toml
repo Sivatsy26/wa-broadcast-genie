@@ -1,1 +1,35 @@
+
 project_id = "wjjchxfctjhbczxkwaqw"
+
+[api]
+# Port for the API
+port = 54321
+# Enable schema polling
+schemas = ["public", "storage", "auth"]
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[inbucket]
+# API port
+port = 54324
+# SMTP port
+smtp_port = 54325
+# POP3 port
+pop3_port = 54326
+
+[storage]
+file_size_limit = "50MiB"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+
+[functions.get_user_bot_flows]
+verify_jwt = true
