@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import WhatsAppAccounts from "./pages/WhatsAppAccounts";
 import BroadcastCampaigns from "./pages/BroadcastCampaigns";
 import ChatbotBuilder from "./pages/ChatbotBuilder";
+import BotFlowBuilder from "./pages/BotFlowBuilder";
 import LeadsCRM from "./pages/LeadsCRM";
 import Templates from "./pages/Templates";
 import Conversations from "./pages/Conversations";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/accounts" element={<WhatsAppAccounts />} />
             <Route path="/broadcasts" element={<BroadcastCampaigns />} />
             <Route path="/chatbots" element={<ChatbotBuilder />} />
+            <Route path="/botflow" element={<BotFlowBuilder />} />
             <Route path="/leads" element={<LeadsCRM />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/conversations" element={<Conversations />} />

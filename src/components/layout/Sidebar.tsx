@@ -12,7 +12,8 @@ import {
   Settings, 
   FileText, 
   Ticket, 
-  Home
+  Home,
+  Zap
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -50,6 +51,11 @@ const navItems: NavItem[] = [
     title: 'Chatbots',
     href: '/chatbots',
     icon: <Bot className="h-5 w-5" />,
+  },
+  {
+    title: 'Bot Flow Builder',
+    href: '/botflow',
+    icon: <Zap className="h-5 w-5" />,
   },
   {
     title: 'Conversations',
