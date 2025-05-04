@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, EdgeProps } from '@xyflow/react';
 
-const CustomEdge = ({
+// Define the component with proper types from EdgeProps
+const CustomEdge: React.FC<EdgeProps> = ({
   id,
   sourceX,
   sourceY,
