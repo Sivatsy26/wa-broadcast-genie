@@ -27,6 +27,10 @@ const DeleteChatbotDialog: React.FC<DeleteChatbotDialogProps> = ({
   onDelete,
   isDeleting,
 }) => {
+  const handleDelete = () => {
+    onDelete(chatbot.id);
+  };
+
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent>
@@ -39,7 +43,7 @@ const DeleteChatbotDialog: React.FC<DeleteChatbotDialogProps> = ({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={() => onDelete(chatbot.id)}
+            onClick={handleDelete}
             disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >

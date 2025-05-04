@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from "uuid";
+import { toast } from "@/components/ui/use-toast";
 
 export interface Chatbot {
   id: string;
@@ -92,7 +91,7 @@ export const fetchChatbot = async (id: string) => {
   }
 };
 
-export const createChatbot = async (chatbot: Partial<Chatbot>) => {
+export const createChatbot = async (chatbotData: Partial<Chatbot>) => {
   try {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
@@ -103,13 +102,20 @@ export const createChatbot = async (chatbot: Partial<Chatbot>) => {
     if (!userData.user) {
       throw new Error("User not authenticated");
     }
+    
+    // Ensure required fields are present
+    if (!chatbotData.name || !chatbotData.type) {
+      throw new Error("Missing required chatbot fields");
+    }
+
+    const chatbot = {
+      ...chatbotData,
+      user_id: userData.user.id
+    };
 
     const { data, error } = await supabase
       .from('chatbots')
-      .insert([{ 
-        ...chatbot, 
-        user_id: userData.user.id 
-      }])
+      .insert(chatbot)
       .select();
     
     if (error) {
@@ -212,10 +218,13 @@ export const duplicateChatbot = async (id: string) => {
     
     // If there are responses, duplicate them for the new chatbot
     if (responses && responses.length > 0) {
-      const newResponses = responses.map(({ id, chatbot_id, created_at, updated_at, ...responseData }) => ({
-        ...responseData,
-        chatbot_id: newChatbot.id
-      }));
+      const newResponses = responses.map((response) => {
+        const { id, created_at, updated_at, ...responseData } = response;
+        return {
+          ...responseData,
+          chatbot_id: newChatbot.id
+        };
+      });
       
       const { error: insertError } = await supabase
         .from('chatbot_responses')
@@ -238,8 +247,9 @@ export const duplicateChatbot = async (id: string) => {
   }
 };
 
-export const updateChatbotStatus = async (id: string, status: 'active' | 'draft' | 'paused') => {
+export const updateChatbotStatus = async (params: { id: string, status: 'active' | 'draft' | 'paused' }) => {
   try {
+    const { id, status } = params;
     const { data, error } = await supabase
       .from('chatbots')
       .update({
@@ -290,9 +300,14 @@ export const fetchChatbotResponses = async (chatbotId: string) => {
 
 export const createChatbotResponse = async (response: Partial<ChatbotResponse>) => {
   try {
+    // Ensure required fields
+    if (!response.chatbot_id || !response.trigger || !response.response) {
+      throw new Error("Missing required response fields");
+    }
+    
     const { data, error } = await supabase
       .from('chatbot_responses')
-      .insert([response])
+      .insert(response)
       .select();
     
     if (error) {
@@ -409,16 +424,18 @@ export const fetchChatbotAnalytics = async (chatbotId: string) => {
       };
     });
     
-    dailyConversations.forEach((conversation) => {
-      const date = new Date(conversation.started_at).toISOString().split('T')[0];
-      const day = dailyData.find(d => d.date === date);
-      if (day) {
-        day.value += 1;
-      }
-    });
+    if (dailyConversations) {
+      dailyConversations.forEach((conversation) => {
+        const date = new Date(conversation.started_at).toISOString().split('T')[0];
+        const day = dailyData.find(d => d.date === date);
+        if (day) {
+          day.value += 1;
+        }
+      });
+    }
     
     return {
-      totalConversations: conversations.length,
+      totalConversations: conversations?.length || 0,
       totalMessages,
       dailyConversations: dailyData
     };
