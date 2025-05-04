@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -65,12 +65,23 @@ import {
   CheckCircle, 
   XCircle,
   Shield,
-  Lock
+  KeyRound,
+  Eye
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface UserProfile {
   id: string;
@@ -97,6 +108,9 @@ const UserManagement = () => {
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isViewUserDialogOpen, setIsViewUserDialogOpen] = useState(false);
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [isChangeRoleDialogOpen, setIsChangeRoleDialogOpen] = useState(false);
+  const [isDeactivateUserDialogOpen, setIsDeactivateUserDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [currentUserRole, setCurrentUserRole] = useState<string>('super-admin');
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,6 +118,8 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all-status');
   const [userAvatar, setUserAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState<string>('');
   
   // Mock data for users
   const [users, setUsers] = useState<UserProfile[]>([
@@ -199,6 +215,20 @@ const UserManagement = () => {
     status: z.enum(['active', 'inactive', 'pending']).default('active'),
   });
 
+  // Role change form schema
+  const roleChangeSchema = z.object({
+    role: z.enum(['super-admin', 'white-label', 'admin', 'user']),
+  });
+
+  // Password reset form schema
+  const passwordResetSchema = z.object({
+    password: z.string().min(8, { message: "Password must be at least 8 characters" }),
+    confirmPassword: z.string()
+  }).refine(data => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
   // User form
   const addUserForm = useForm<z.infer<typeof userFormSchema>>({
     resolver: zodResolver(userFormSchema),
@@ -234,6 +264,23 @@ const UserManagement = () => {
       postalCode: "",
       role: "user",
       status: "active",
+    },
+  });
+
+  // Role change form
+  const changeRoleForm = useForm<z.infer<typeof roleChangeSchema>>({
+    resolver: zodResolver(roleChangeSchema),
+    defaultValues: {
+      role: "user",
+    },
+  });
+
+  // Password reset form
+  const passwordResetForm = useForm<z.infer<typeof passwordResetSchema>>({
+    resolver: zodResolver(passwordResetSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -395,6 +442,119 @@ const UserManagement = () => {
     toast({
       title: "User updated",
       description: `${data.name} has been updated successfully`
+    });
+  };
+
+  const handleChangeRole = (user: UserProfile) => {
+    setSelectedUser(user);
+    changeRoleForm.setValue("role", user.role);
+    setIsChangeRoleDialogOpen(true);
+  };
+
+  const handleUpdateRole = (data: z.infer<typeof roleChangeSchema>) => {
+    if (!selectedUser) return;
+
+    // Check if user can change to the selected role
+    const availableRoles = getAvailableRoles();
+    if (!availableRoles.includes(data.role) && data.role !== selectedUser.role) {
+      toast({
+        title: "Permission denied",
+        description: `You don't have permission to change role to ${data.role}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Update user role
+    const updatedUsers = users.map(user => {
+      if (user.id === selectedUser.id) {
+        return {
+          ...user,
+          role: data.role
+        };
+      }
+      return user;
+    });
+    
+    setUsers(updatedUsers);
+    setIsChangeRoleDialogOpen(false);
+    setSelectedUser(null);
+    
+    toast({
+      title: "Role updated",
+      description: `${selectedUser.name}'s role has been updated to ${data.role}`
+    });
+  };
+
+  const handleResetPassword = (user: UserProfile) => {
+    setSelectedUser(user);
+    passwordResetForm.reset();
+    setIsResetPasswordDialogOpen(true);
+  };
+
+  const handleUpdatePassword = (data: z.infer<typeof passwordResetSchema>) => {
+    if (!selectedUser) return;
+    
+    // In a real app, you'd call an API to update the user's password
+    // Here we'll just show a toast message
+    setIsResetPasswordDialogOpen(false);
+    setSelectedUser(null);
+    passwordResetForm.reset();
+    
+    toast({
+      title: "Password reset",
+      description: `Password for ${selectedUser.name} has been reset successfully`
+    });
+  };
+
+  const handleToggleUserStatus = (user: UserProfile) => {
+    setSelectedUser(user);
+    
+    // If active, show deactivation dialog, otherwise activate immediately
+    if (user.status === 'active') {
+      setIsDeactivateUserDialogOpen(true);
+    } else {
+      // Activate user directly
+      const updatedUsers = users.map(u => {
+        if (u.id === user.id) {
+          return {
+            ...u,
+            status: 'active'
+          };
+        }
+        return u;
+      });
+      
+      setUsers(updatedUsers);
+      
+      toast({
+        title: "User activated",
+        description: `${user.name} has been activated successfully`
+      });
+    }
+  };
+
+  const handleDeactivateUser = () => {
+    if (!selectedUser) return;
+    
+    // Update user status
+    const updatedUsers = users.map(user => {
+      if (user.id === selectedUser.id) {
+        return {
+          ...user,
+          status: 'inactive'
+        };
+      }
+      return user;
+    });
+    
+    setUsers(updatedUsers);
+    setIsDeactivateUserDialogOpen(false);
+    setSelectedUser(null);
+    
+    toast({
+      title: "User deactivated",
+      description: `${selectedUser.name} has been deactivated successfully`
     });
   };
 
@@ -853,7 +1013,7 @@ const UserManagement = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleViewUser(user)}>
-                          <User className="mr-2 h-4 w-4" />
+                          <Eye className="mr-2 h-4 w-4" />
                           View Details
                         </DropdownMenuItem>
                         
@@ -865,26 +1025,26 @@ const UserManagement = () => {
                         )}
                         
                         {currentUserRole === 'super-admin' && (
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleChangeRole(user)}>
                             <Shield className="mr-2 h-4 w-4" />
                             Change Role
                           </DropdownMenuItem>
                         )}
                         
-                        <DropdownMenuItem>
-                          <Lock className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => handleResetPassword(user)}>
+                          <KeyRound className="mr-2 h-4 w-4" />
                           Reset Password
                         </DropdownMenuItem>
                         
                         <DropdownMenuSeparator />
                         
                         {user.status === 'active' ? (
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleUserStatus(user)}>
                             <XCircle className="mr-2 h-4 w-4" />
                             Deactivate
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleUserStatus(user)}>
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Activate
                           </DropdownMenuItem>
@@ -1007,6 +1167,23 @@ const UserManagement = () => {
                   </div>
                 </div>
               )}
+              
+              <DialogFooter>
+                <div className="flex justify-end gap-2 w-full">
+                  {canEditUser(selectedUser) && (
+                    <Button onClick={() => {
+                      setIsViewUserDialogOpen(false);
+                      handleEditUser(selectedUser);
+                    }}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => setIsViewUserDialogOpen(false)}>
+                    Close
+                  </Button>
+                </div>
+              </DialogFooter>
             </div>
           )}
         </DialogContent>
@@ -1271,16 +1448,133 @@ const UserManagement = () => {
           </Form>
         </DialogContent>
       </Dialog>
-      
-      {/* Delete User Dialog */}
-      <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
-        <DialogContent>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
+            <DialogTitle>Reset Password</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this user? This action cannot be undone.
+              {selectedUser && `Reset password for ${selectedUser.name}`}
             </DialogDescription>
           </DialogHeader>
+          
+          <Form {...passwordResetForm}>
+            <form onSubmit={passwordResetForm.handleSubmit(handleUpdatePassword)} className="space-y-6">
+              <FormField
+                control={passwordResetForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Enter new password" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Password must be at least 8 characters long
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={passwordResetForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Confirm new password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => {
+                  setIsResetPasswordDialogOpen(false);
+                  setSelectedUser(null);
+                  passwordResetForm.reset();
+                }}>
+                  Cancel
+                </Button>
+                <Button type="submit">Reset Password</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Change Role Dialog */}
+      <Dialog open={isChangeRoleDialogOpen} onOpenChange={setIsChangeRoleDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Change User Role</DialogTitle>
+            <DialogDescription>
+              {selectedUser && `Update role for ${selectedUser.name}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...changeRoleForm}>
+            <form onSubmit={changeRoleForm.handleSubmit(handleUpdateRole)} className="space-y-6">
+              <FormField
+                control={changeRoleForm.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>User Role</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {getAvailableRoles().map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {role === 'super-admin' ? 'Super Admin' :
+                             role === 'white-label' ? 'White Label' :
+                             role === 'admin' ? 'Admin' : 'User'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Choose the appropriate role for this user
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => {
+                  setIsChangeRoleDialogOpen(false);
+                  setSelectedUser(null);
+                }}>
+                  Cancel
+                </Button>
+                <Button type="submit">Update Role</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Deactivate User Dialog */}
+      <AlertDialog open={isDeactivateUserDialogOpen} onOpenChange={setIsDeactivateUserDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to deactivate this user? They will lose access to the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           
           {selectedUser && (
             <div className="flex items-center gap-3 py-3">
@@ -1297,25 +1591,58 @@ const UserManagement = () => {
             </div>
           )}
           
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setIsDeleteUserDialogOpen(false);
-                setSelectedUser(null);
-              }}
-            >
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setIsDeactivateUserDialogOpen(false);
+              setSelectedUser(null);
+            }}>
               Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleConfirmDeleteUser}
-            >
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivateUser} className="bg-amber-600 hover:bg-amber-700">
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Delete User Dialog */}
+      <AlertDialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this user? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {selectedUser && (
+            <div className="flex items-center gap-3 py-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={selectedUser.avatar} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {selectedUser.name.split(' ').map(n => n[0]).join('')}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-medium">{selectedUser.name}</div>
+                <div className="text-sm text-muted-foreground">{selectedUser.email}</div>
+              </div>
+            </div>
+          )}
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setIsDeleteUserDialogOpen(false);
+              setSelectedUser(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeleteUser} className="bg-destructive hover:bg-destructive/90">
               Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
