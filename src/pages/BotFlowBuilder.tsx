@@ -5,11 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, addEdge, Connection } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Bot, MessageSquare, Copy, Zap, Key, ArrowRight, MessageSquarePlus } from 'lucide-react';
+import { Bot, MessageSquare, Copy, Zap, Key, ArrowRight, MessageSquarePlus, FileText, Plus, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, LogIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 // Import custom node components
 import StartNode from '@/components/botflow/StartNode';
@@ -83,11 +93,15 @@ const BotFlowBuilder = () => {
   const [flowName, setFlowName] = useState('Untitled Flow');
   const [activeTab, setActiveTab] = useState("editor");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
   const [selectedFlow, setSelectedFlow] = useState(null);
   const [userFlows, setUserFlows] = useState([]);
   const [triggerKeywords, setTriggerKeywords] = useState(['help', 'support']);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [newBotDialogOpen, setNewBotDialogOpen] = useState(false);
+  const [newBotName, setNewBotName] = useState('');
 
   // Check for authentication
   useEffect(() => {
@@ -96,6 +110,10 @@ const BotFlowBuilder = () => {
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
         setIsAuthenticated(!!data.session);
+        
+        if (data.session) {
+          fetchUserFlows();
+        }
       } catch (error) {
         console.error("Error checking authentication:", error);
       } finally {
@@ -105,6 +123,30 @@ const BotFlowBuilder = () => {
     
     checkAuth();
   }, []);
+
+  // Fetch user's saved flows
+  const fetchUserFlows = async () => {
+    try {
+      setIsLoading(true);
+      const { data: flows, error } = await supabase
+        .from('bot_flows')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      setUserFlows(flows || []);
+    } catch (error) {
+      console.error("Error fetching flows:", error);
+      toast({
+        title: "Failed to load your flows",
+        description: "There was an error loading your saved flows.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Connect nodes when connections are made
   const onConnect = (params: Connection) => {
@@ -201,16 +243,27 @@ const BotFlowBuilder = () => {
           { id: 'e2-3', source: 'keywordTrigger-1', target: 'aiAssistant-1', type: 'custom', animated: true, label: 'Keyword Match' },
           { id: 'e2-4', source: 'keywordTrigger-1', target: 'message-1', type: 'custom', animated: true, label: 'No Match' },
         ];
+      } else if (typeof templateId === 'object' && templateId.id) {
+        // Load a user-saved flow
+        templateNodes = templateId.flow_data.nodes;
+        templateEdges = templateId.flow_data.edges;
+        setFlowName(templateId.name);
+        setTriggerKeywords(templateId.keywords || []);
       }
       
       setNodes(templateNodes);
       setEdges(templateEdges);
-      setFlowName(flowTemplates.find(t => t.id === templateId).name);
-      setSelectedFlow(templateId);
+      
+      if (typeof templateId === 'string') {
+        setFlowName(flowTemplates.find(t => t.id === templateId)?.name || 'Untitled Flow');
+        setSelectedFlow(templateId);
+      } else {
+        setSelectedFlow(templateId.id);
+      }
       
       toast({
-        title: "Template Loaded",
-        description: `Loaded the ${flowTemplates.find(t => t.id === templateId).name} template`,
+        title: "Flow Loaded",
+        description: `Loaded ${typeof templateId === 'string' ? flowTemplates.find(t => t.id === templateId)?.name : templateId.name}`,
       });
       
       setIsLoading(false);
@@ -229,29 +282,11 @@ const BotFlowBuilder = () => {
     }
 
     // Create a deep copy of the current nodes and edges
-    const clonedNodes = JSON.parse(JSON.stringify(nodes)).map(node => ({
-      ...node,
-      id: `${node.id}-clone`,
-    }));
+    const clonedNodes = JSON.parse(JSON.stringify(nodes));
+    const clonedEdges = JSON.parse(JSON.stringify(edges));
 
-    const clonedEdges = JSON.parse(JSON.stringify(edges)).map(edge => ({
-      ...edge,
-      id: `${edge.id}-clone`,
-      source: `${edge.source}-clone`,
-      target: `${edge.target}-clone`,
-    }));
-
-    // Add to user flows
-    const newFlowId = `${selectedFlow}-clone-${Date.now()}`;
-    const newFlow = {
-      id: newFlowId,
-      name: `${flowName} (Clone)`,
-      nodes: clonedNodes,
-      edges: clonedEdges,
-      createdAt: new Date().toISOString(),
-    };
-
-    setUserFlows([...userFlows, newFlow]);
+    // Save the cloned flow with a new name
+    saveFlowToDb(`${flowName} (Clone)`, clonedNodes, clonedEdges, [...triggerKeywords]);
 
     toast({
       title: "Flow Cloned",
@@ -269,12 +304,117 @@ const BotFlowBuilder = () => {
     });
   };
 
+  // Open save dialog
+  const openSaveDialog = () => {
+    setSaveDialogOpen(true);
+  };
+
+  // Open new bot dialog
+  const openNewBotDialog = () => {
+    setNewBotDialogOpen(true);
+  };
+
+  // Create a new bot flow
+  const createNewBot = () => {
+    if (!newBotName.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please provide a name for your new bot flow",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFlowName(newBotName);
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+    setTriggerKeywords(['help', 'support']);
+    setSelectedFlow(null);
+    setNewBotDialogOpen(false);
+    setNewBotName('');
+    
+    toast({
+      title: "New Bot Created",
+      description: `Created a new bot flow "${newBotName}"`,
+    });
+  };
+
+  // Save the current flow to the database
+  const saveFlowToDb = async (name = flowName, flowNodes = nodes, flowEdges = edges, keywords = triggerKeywords) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to save your flow",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const flowData = {
+        name: name,
+        flow_data: {
+          nodes: flowNodes,
+          edges: flowEdges,
+        },
+        keywords: keywords,
+      };
+
+      // If selectedFlow is a string ID from one of our templates, create a new flow
+      const isUpdate = selectedFlow && typeof selectedFlow !== 'string';
+
+      let result;
+      if (isUpdate) {
+        // Update existing flow
+        const { data, error } = await supabase
+          .from('bot_flows')
+          .update(flowData)
+          .eq('id', selectedFlow)
+          .select();
+        
+        if (error) throw error;
+        result = data[0];
+      } else {
+        // Create new flow
+        const { data, error } = await supabase
+          .from('bot_flows')
+          .insert(flowData)
+          .select();
+        
+        if (error) throw error;
+        result = data[0];
+        setSelectedFlow(result.id);
+      }
+
+      toast({
+        title: "Flow Saved",
+        description: `${isUpdate ? 'Updated' : 'Saved'} "${name}" successfully`,
+      });
+
+      // Refresh user flows
+      fetchUserFlows();
+      setSaveDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving flow:", error);
+      toast({
+        title: "Save Failed",
+        description: "There was an error saving your flow",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Save the current flow
   const saveFlow = () => {
-    toast({
-      title: "Flow Saved",
-      description: `Saved "${flowName}" successfully`,
-    });
+    if (!flowName || flowName === 'Untitled Flow') {
+      openSaveDialog();
+    } else {
+      saveFlowToDb();
+    }
   };
 
   const handleSignIn = () => {
@@ -333,8 +473,21 @@ const BotFlowBuilder = () => {
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
-            onClick={saveFlow}
+            onClick={openNewBotDialog}
           >
+            <Plus className="mr-2 h-4 w-4" />
+            New Bot
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={saveFlow}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
             Save Flow
           </Button>
           <Button 
@@ -351,9 +504,10 @@ const BotFlowBuilder = () => {
       </div>
       
       <Tabs defaultValue="editor" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-md grid-cols-4">
           <TabsTrigger value="editor">Flow Editor</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="saved">My Bots</TabsTrigger>
           <TabsTrigger value="keywords">Trigger Keywords</TabsTrigger>
         </TabsList>
         
@@ -414,7 +568,10 @@ const BotFlowBuilder = () => {
             </Card>
             
             <Card className="col-span-4 h-[70vh]">
-              <CardContent className="p-0 h-full">
+              <CardHeader className="py-3 px-4 border-b flex flex-row justify-between items-center">
+                <CardTitle className="text-lg">{flowName}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 h-[calc(100%-60px)]">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -462,6 +619,58 @@ const BotFlowBuilder = () => {
           </div>
         </TabsContent>
         
+        <TabsContent value="saved" className="mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {isLoading ? (
+              <div className="col-span-full flex items-center justify-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : userFlows.length > 0 ? (
+              userFlows.map((flow) => (
+                <Card 
+                  key={flow.id} 
+                  className={`cursor-pointer transition-all ${selectedFlow === flow.id ? 'border-primary ring-2 ring-primary/20' : 'hover:border-primary/50'}`}
+                  onClick={() => loadTemplate(flow)}
+                >
+                  <CardHeader>
+                    <div className="flex justify-center mb-2">
+                      <FileText className="h-10 w-10 text-blue-500" />
+                    </div>
+                    <CardTitle className="text-center text-lg">{flow.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-center text-muted-foreground">
+                      Last updated: {new Date(flow.updated_at || flow.created_at).toLocaleDateString()}
+                    </p>
+                    {flow.keywords && flow.keywords.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1 justify-center">
+                        {flow.keywords.slice(0, 3).map((keyword, i) => (
+                          <span key={i} className="bg-muted px-2 py-0.5 text-xs rounded-full">{keyword}</span>
+                        ))}
+                        {flow.keywords.length > 3 && (
+                          <span className="bg-muted px-2 py-0.5 text-xs rounded-full">+{flow.keywords.length - 3} more</span>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-full flex flex-col items-center justify-center h-40 text-muted-foreground">
+                <p>You don't have any saved bots yet</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={openNewBotDialog}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create New Bot
+                </Button>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+        
         <TabsContent value="keywords" className="mt-4">
           <KeywordManager 
             keywords={triggerKeywords} 
@@ -469,6 +678,84 @@ const BotFlowBuilder = () => {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Save Dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Bot Flow</DialogTitle>
+            <DialogDescription>
+              Give your bot flow a name to save it
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="flow-name">Bot Flow Name</Label>
+            <Input
+              id="flow-name"
+              value={flowName}
+              onChange={(e) => setFlowName(e.target.value)}
+              placeholder="Enter a name for your bot flow"
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSaveDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => saveFlowToDb()}
+              disabled={!flowName.trim() || isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Bot Dialog */}
+      <Dialog open={newBotDialogOpen} onOpenChange={setNewBotDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Bot</DialogTitle>
+            <DialogDescription>
+              Start building a new bot flow from scratch
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="new-bot-name">Bot Name</Label>
+            <Input
+              id="new-bot-name"
+              value={newBotName}
+              onChange={(e) => setNewBotName(e.target.value)}
+              placeholder="Enter a name for your new bot"
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setNewBotDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={createNewBot}
+              disabled={!newBotName.trim()}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
