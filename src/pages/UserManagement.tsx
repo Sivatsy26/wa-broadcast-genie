@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -1003,4 +1004,598 @@ const UserManagement = () => {
                     {getRoleBadge(user.role)}
                   </TableCell>
                   <TableCell>
-                    <div>
+                    {user.company || '—'}
+                  </TableCell>
+                  <TableCell>
+                    {getStatusBadge(user.status)}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewUser(user)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Details
+                        </DropdownMenuItem>
+                        {canEditUser(user) && (
+                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        )}
+                        {canEditUser(user) && (
+                          <DropdownMenuItem onClick={() => handleChangeRole(user)}>
+                            <Shield className="mr-2 h-4 w-4" />
+                            Change Role
+                          </DropdownMenuItem>
+                        )}
+                        {canEditUser(user) && (
+                          <DropdownMenuItem onClick={() => handleResetPassword(user)}>
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            Reset Password
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        {canEditUser(user) && (
+                          <DropdownMenuItem onClick={() => handleToggleUserStatus(user)}>
+                            {user.status === 'active' ? (
+                              <>
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Activate
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                        )}
+                        {canDeleteUser(user) && (
+                          <DropdownMenuItem 
+                            onClick={() => handleInitiateDeleteUser(user)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      
+      {/* View User Dialog */}
+      <Dialog open={isViewUserDialogOpen} onOpenChange={setIsViewUserDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>
+              View detailed information about this user
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="flex flex-col items-center mb-4">
+                <Avatar className="h-20 w-20 mb-2">
+                  <AvatarImage src={selectedUser.avatar} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                    {selectedUser.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <h3 className="font-semibold text-lg">{selectedUser.name}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  {getRoleBadge(selectedUser.role)}
+                  {getStatusBadge(selectedUser.status)}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Email</p>
+                  <p>{selectedUser.email}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Phone</p>
+                  <p>{selectedUser.phone || '—'}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Company</p>
+                  <p>{selectedUser.company || '—'}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Position</p>
+                  <p>{selectedUser.position || '—'}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Created At</p>
+                  <p>{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Added By</p>
+                  <p>{selectedUser.addedBy || '—'}</p>
+                </div>
+              </div>
+              
+              {(selectedUser.address1 || selectedUser.country) && (
+                <>
+                  <div className="border-t pt-3 mt-3">
+                    <h4 className="font-medium mb-2">Address Information</h4>
+                    <div className="grid grid-cols-1 gap-2 text-sm">
+                      {selectedUser.address1 && (
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">Address Line 1</p>
+                          <p>{selectedUser.address1}</p>
+                        </div>
+                      )}
+                      
+                      {selectedUser.address2 && (
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">Address Line 2</p>
+                          <p>{selectedUser.address2}</p>
+                        </div>
+                      )}
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {selectedUser.state && (
+                          <div className="space-y-1">
+                            <p className="text-muted-foreground">State</p>
+                            <p>{selectedUser.state}</p>
+                          </div>
+                        )}
+                        
+                        {selectedUser.country && (
+                          <div className="space-y-1">
+                            <p className="text-muted-foreground">Country</p>
+                            <p>{selectedUser.country}</p>
+                          </div>
+                        )}
+                        
+                        {selectedUser.postalCode && (
+                          <div className="space-y-1">
+                            <p className="text-muted-foreground">Postal Code</p>
+                            <p>{selectedUser.postalCode}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button onClick={() => setIsViewUserDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit User Dialog */}
+      <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user information and settings
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...editUserForm}>
+            <form onSubmit={editUserForm.handleSubmit(handleUpdateUser)} className="space-y-6">
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative mb-4">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={avatarPreview || ""} />
+                    <AvatarFallback className="bg-primary/10">
+                      <User className="h-12 w-12 text-primary/80" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    className="absolute bottom-0 right-0"
+                    onClick={() => document.getElementById('edit-avatar-upload')?.click()}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <input
+                    id="edit-avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Upload a profile picture (Max 1MB)
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={editUserForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address *</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="john@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Company Inc." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Position</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Marketing Manager" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+1 555-123-4567" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>User Role *</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {getAvailableRoles().map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role === 'super-admin' ? 'Super Admin' :
+                               role === 'white-label' ? 'White Label' :
+                               role === 'admin' ? 'Admin' : 'User'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editUserForm.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status *</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-2">Address Information (Optional)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editUserForm.control}
+                    name="address1"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address Line 1</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123 Main St" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="address2"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address Line 2</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Suite 500" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input placeholder="California" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Country</FormLabel>
+                        <FormControl>
+                          <Input placeholder="United States" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="postalCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Postal Code</FormLabel>
+                        <FormControl>
+                          <Input placeholder="90001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => {
+                  setIsEditUserDialogOpen(false);
+                  setAvatarPreview(null);
+                  setSelectedUser(null);
+                }}>
+                  Cancel
+                </Button>
+                <Button type="submit">Save Changes</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Change Role Dialog */}
+      <Dialog open={isChangeRoleDialogOpen} onOpenChange={setIsChangeRoleDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Change Role</DialogTitle>
+            <DialogDescription>
+              Update the role and permissions for {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...changeRoleForm}>
+            <form onSubmit={changeRoleForm.handleSubmit(handleUpdateRole)} className="space-y-4">
+              <FormField
+                control={changeRoleForm.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select Role</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {getAvailableRoles().map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {role === 'super-admin' ? 'Super Admin' :
+                             role === 'white-label' ? 'White Label' :
+                             role === 'admin' ? 'Admin' : 'User'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => setIsChangeRoleDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Update Role</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Set a new password for {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...passwordResetForm}>
+            <form onSubmit={passwordResetForm.handleSubmit(handleUpdatePassword)} className="space-y-4">
+              <FormField
+                control={passwordResetForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Enter new password" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Password must be at least 8 characters
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={passwordResetForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Confirm new password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => setIsResetPasswordDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Reset Password</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Deactivate User Confirmation Dialog */}
+      <AlertDialog open={isDeactivateUserDialogOpen} onOpenChange={setIsDeactivateUserDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to deactivate {selectedUser?.name}? They will not be able to access the system until reactivated.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivateUser} className="bg-orange-500 hover:bg-orange-600">
+              <XCircle className="mr-2 h-4 w-4" />
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedUser?.name}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeleteUser} className="bg-red-500 hover:bg-red-600">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default UserManagement;
+
