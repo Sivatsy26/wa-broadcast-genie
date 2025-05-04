@@ -92,9 +92,9 @@ export const useChatbots = () => {
     }
   });
 
-  // Update chatbot status
+  // Update chatbot status - Fixed this to pass just the params object
   const updateChatbotStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string, status: 'active' | 'draft' | 'paused' }) => updateChatbotStatus(id, status),
+    mutationFn: (params: { id: string, status: 'active' | 'draft' | 'paused' }) => updateChatbotStatus(params),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['chatbots'] });
       queryClient.invalidateQueries({ queryKey: ['chatbot', variables.id] });

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -207,7 +206,7 @@ const ChatbotBuilder = () => {
       show_avatar: true
     };
     
-    await createChatbot(newChatbot);
+    createChatbot(newChatbot);
     setCreateDialogOpen(false);
     setBotName('');
     setSelectedTemplate('');
@@ -250,19 +249,17 @@ const ChatbotBuilder = () => {
     }
   };
   
-  const handleStatusChange = async (chatbot: Chatbot, newStatus: 'active' | 'draft' | 'paused') => {
-    await updateChatbotStatus({ id: chatbot.id, status: newStatus });
+  const handleStatusChange = (chatbot: Chatbot, newStatus: 'active' | 'draft' | 'paused') => {
+    updateChatbotStatus({ id: chatbot.id, status: newStatus });
   };
   
-  const handleDuplicateChatbot = async (id: string) => {
-    await duplicateChatbot(id);
+  const handleDuplicateChatbot = (id: string) => {
+    duplicateChatbot(id);
   };
   
-  const handleDeleteChatbot = async (id: string) => {
-    const success = await deleteChatbot(id);
-    if (success) {
-      setDeleteChatbotData(null);
-    }
+  const handleDeleteChatbot = (id: string) => {
+    deleteChatbot(id);
+    setDeleteChatbotData(null);
   };
 
   if (isCheckingAuth) {

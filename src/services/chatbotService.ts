@@ -108,9 +108,17 @@ export const createChatbot = async (chatbotData: Partial<Chatbot>) => {
       throw new Error("Missing required chatbot fields");
     }
 
+    // Create a properly structured object that meets the type requirements
+    // Fix: Make sure all required fields are present
     const chatbot = {
-      ...chatbotData,
-      user_id: userData.user.id
+      name: chatbotData.name,
+      type: chatbotData.type,
+      user_id: userData.user.id,
+      status: chatbotData.status || 'draft',
+      welcome_message: chatbotData.welcome_message || 'Hello! How can I assist you today?',
+      primary_color: chatbotData.primary_color || '#4f46e5',
+      show_avatar: chatbotData.show_avatar !== undefined ? chatbotData.show_avatar : true,
+      channels: chatbotData.channels || []
     };
 
     const { data, error } = await supabase
@@ -305,9 +313,16 @@ export const createChatbotResponse = async (response: Partial<ChatbotResponse>) 
       throw new Error("Missing required response fields");
     }
     
+    // Fix: Create a properly structured object that meets the type requirements
+    const responseData = {
+      chatbot_id: response.chatbot_id,
+      trigger: response.trigger,
+      response: response.response
+    };
+    
     const { data, error } = await supabase
       .from('chatbot_responses')
-      .insert(response)
+      .insert(responseData)
       .select();
     
     if (error) {
