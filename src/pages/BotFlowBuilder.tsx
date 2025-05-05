@@ -10,7 +10,8 @@ import '@xyflow/react/dist/style.css';
 import { 
   Bot, MessageSquare, Copy, Zap, Key, ArrowRight, 
   MessageSquarePlus, FileText, Plus, Save, Trash2,
-  Code, MoreHorizontal, Minus, Loader2, LogIn
+  Code, MoreHorizontal, Minus, Loader2, LogIn,
+  Info, Facebook, Instagram, Link, Whatsapp 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,6 +58,7 @@ import { FlowTemplateSelector } from '@/components/botflow/FlowTemplateSelector'
 import { NodePalette } from '@/components/botflow/NodePalette';
 import { KeywordManager } from '@/components/botflow/KeywordManager';
 import { SavedFlowsList } from '@/components/botflow/SavedFlowsList';
+import { PlanDetailsModal } from '@/components/botflow/PlanDetailsModal';
 
 // Node types registry
 const nodeTypes = {
@@ -139,6 +141,13 @@ const BotFlowBuilder = () => {
   const [functionName, setFunctionName] = useState('Process Function');
   const [platforms, setPlatforms] = useState(['whatsapp', 'facebook', 'instagram']);
   const [selectedPlatforms, setSelectedPlatforms] = useState(['whatsapp']);
+  const [planDetailsOpen, setPlanDetailsOpen] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState("Pro"); // This should come from user data in a real app
+  const [platformLimits, setPlatformLimits] = useState({
+    whatsapp: 5,
+    facebook: 5,
+    instagram: 5
+  });
 
   // Check for authentication
   useEffect(() => {
@@ -433,11 +442,62 @@ const BotFlowBuilder = () => {
 
   // Handle platform selection
   const handlePlatformChange = (platform) => {
+    const isPlatformSelected = selectedPlatforms.includes(platform);
+
+    if (!isPlatformSelected) {
+      // Check if adding would exceed the limit
+      if (selectedPlatforms.length >= getTotalPlatformLimit()) {
+        toast({
+          title: "Account limit reached",
+          description: `Your ${currentPlan} plan allows ${getTotalPlatformLimit()} total platform connections. Upgrade for more.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if adding would exceed the platform-specific limit
+      const platformCount = countPlatformSelections(platform);
+      if (platformCount >= platformLimits[platform]) {
+        toast({
+          title: `${platform} account limit reached`,
+          description: `Your plan allows ${platformLimits[platform]} ${platform} accounts. Upgrade for more.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSelectedPlatforms(current => 
       current.includes(platform)
         ? current.filter(p => p !== platform)
         : [...current, platform]
     );
+  };
+
+  // Count how many selections of a specific platform are already made
+  const countPlatformSelections = (platformName) => {
+    return selectedPlatforms.filter(p => p === platformName).length;
+  };
+
+  // Get total platform limit based on plan
+  const getTotalPlatformLimit = () => {
+    switch (currentPlan) {
+      case "Free":
+        return 3; // 1 per platform
+      case "Pro":
+        return 15; // 5 per platform
+      case "Business":
+        return 60; // 20 per platform
+      case "Enterprise":
+        return Infinity;
+      default:
+        return 3;
+    }
+  };
+
+  // Open plan details modal
+  const openPlanDetails = () => {
+    setPlanDetailsOpen(true);
   };
 
   // Open save dialog
@@ -751,34 +811,116 @@ const BotFlowBuilder = () => {
         <TabsContent value="platforms" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Platform Selection</CardTitle>
-              <CardDescription>
-                Choose which platforms this bot should be active on
-              </CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Platform Selection</CardTitle>
+                  <CardDescription>
+                    Choose which platforms this bot should be active on
+                  </CardDescription>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={openPlanDetails}
+                >
+                  <Info className="h-4 w-4 mr-1" />
+                  Plan Details
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-3">
-                <Button 
-                  variant={selectedPlatforms.includes('whatsapp') ? "default" : "outline"}
-                  className={selectedPlatforms.includes('whatsapp') ? "bg-green-600 hover:bg-green-700" : ""}
-                  onClick={() => handlePlatformChange('whatsapp')}
-                >
-                  WhatsApp
-                </Button>
-                <Button 
-                  variant={selectedPlatforms.includes('facebook') ? "default" : "outline"}
-                  className={selectedPlatforms.includes('facebook') ? "bg-blue-600 hover:bg-blue-700" : ""}
-                  onClick={() => handlePlatformChange('facebook')}
-                >
-                  Facebook Messenger
-                </Button>
-                <Button 
-                  variant={selectedPlatforms.includes('instagram') ? "default" : "outline"}
-                  className={selectedPlatforms.includes('instagram') ? "bg-purple-600 hover:bg-purple-700" : ""}
-                  onClick={() => handlePlatformChange('instagram')}
-                >
-                  Instagram
-                </Button>
+              <div className="mb-4">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Your {currentPlan} plan allows {platformLimits.whatsapp} WhatsApp, {platformLimits.facebook} Facebook and {platformLimits.instagram} Instagram accounts
+                </p>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary rounded-full transition-all" 
+                    style={{ 
+                      width: `${Math.min((selectedPlatforms.length / getTotalPlatformLimit()) * 100, 100)}%` 
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Using {selectedPlatforms.length} of {getTotalPlatformLimit() === Infinity ? '∞' : getTotalPlatformLimit()} available connections
+                </p>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-medium mb-3 flex items-center">
+                    <Whatsapp className="h-4 w-4 mr-2 text-green-600" />
+                    WhatsApp Accounts
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {Array.from({ length: Math.min(platformLimits.whatsapp, 8) }, (_, i) => (
+                      <Button 
+                        key={`whatsapp-${i}`}
+                        variant={selectedPlatforms.includes(`whatsapp-${i}`) ? "default" : "outline"}
+                        className={selectedPlatforms.includes(`whatsapp-${i}`) ? "bg-green-600 hover:bg-green-700" : ""}
+                        onClick={() => handlePlatformChange(`whatsapp-${i}`)}
+                      >
+                        WhatsApp {i + 1}
+                      </Button>
+                    ))}
+                    {currentPlan !== "Enterprise" && (
+                      <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add More
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium mb-3 flex items-center">
+                    <Facebook className="h-4 w-4 mr-2 text-blue-600" />
+                    Facebook Messenger Accounts
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {Array.from({ length: Math.min(platformLimits.facebook, 8) }, (_, i) => (
+                      <Button 
+                        key={`facebook-${i}`}
+                        variant={selectedPlatforms.includes(`facebook-${i}`) ? "default" : "outline"}
+                        className={selectedPlatforms.includes(`facebook-${i}`) ? "bg-blue-600 hover:bg-blue-700" : ""}
+                        onClick={() => handlePlatformChange(`facebook-${i}`)}
+                      >
+                        Facebook {i + 1}
+                      </Button>
+                    ))}
+                    {currentPlan !== "Enterprise" && (
+                      <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add More
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium mb-3 flex items-center">
+                    <Instagram className="h-4 w-4 mr-2 text-purple-600" />
+                    Instagram Accounts
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {Array.from({ length: Math.min(platformLimits.instagram, 8) }, (_, i) => (
+                      <Button 
+                        key={`instagram-${i}`}
+                        variant={selectedPlatforms.includes(`instagram-${i}`) ? "default" : "outline"}
+                        className={selectedPlatforms.includes(`instagram-${i}`) ? "bg-purple-600 hover:bg-purple-700" : ""}
+                        onClick={() => handlePlatformChange(`instagram-${i}`)}
+                      >
+                        Instagram {i + 1}
+                      </Button>
+                    ))}
+                    {currentPlan !== "Enterprise" && (
+                      <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add More
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -939,6 +1081,13 @@ const BotFlowBuilder = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Plan Details Modal */}
+      <PlanDetailsModal 
+        isOpen={planDetailsOpen}
+        onClose={() => setPlanDetailsOpen(false)}
+        currentPlan={currentPlan}
+      />
     </div>
   );
 };
