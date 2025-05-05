@@ -11,38 +11,9 @@ import {
   Bot, MessageSquare, Copy, Zap, Key, ArrowRight, 
   MessageSquarePlus, FileText, Plus, Save, Trash2,
   Code, MoreHorizontal, Minus, Loader2, LogIn,
-  Info, Facebook, Instagram, Link, Whatsapp 
+  Info, Facebook, Instagram, Link
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from '@/integrations/supabase/client';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 // Import custom node components
 import StartNode from '@/components/botflow/StartNode';
@@ -849,7 +820,9 @@ const BotFlowBuilder = () => {
               <div className="space-y-6">
                 <div>
                   <h3 className="font-medium mb-3 flex items-center">
-                    <Whatsapp className="h-4 w-4 mr-2 text-green-600" />
+                    <div className="h-4 w-4 mr-2 text-green-600 flex items-center justify-center">
+                      <span className="text-xs font-bold">W</span>
+                    </div>
                     WhatsApp Accounts
                   </h3>
                   <div className="flex flex-wrap gap-3">
