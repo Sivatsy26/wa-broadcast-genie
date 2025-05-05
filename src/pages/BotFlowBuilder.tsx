@@ -203,8 +203,12 @@ const BotFlowBuilder = () => {
       position: { x: 250, y: nodes.length * 100 + 100 },
     };
     
+    // For function nodes, add the functionCode property to the data object
     if (type === 'function') {
-      newNode.data.functionCode = 'function process(input) {\n  return input;\n}';
+      newNode.data = {
+        ...newNode.data,
+        functionCode: 'function process(input) {\n  return input;\n}'
+      };
     }
     
     setNodes((nds) => [...nds, newNode]);
