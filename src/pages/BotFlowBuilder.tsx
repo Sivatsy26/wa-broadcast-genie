@@ -204,11 +204,11 @@ const BotFlowBuilder = () => {
     const newNode = {
       id: `${type}-${nodes.length + 1}`,
       type,
-      data: { label },
       position: { x: 250, y: nodes.length * 100 + 100 },
+      data: { label },
     };
     
-    // For function nodes, add the functionCode property to the data object
+    // For function nodes, add the functionCode property
     if (type === 'function') {
       newNode.data = {
         ...newNode.data,
