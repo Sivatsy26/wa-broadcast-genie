@@ -1,10 +1,18 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, addEdge, Connection } from '@xyflow/react';
+import { 
+  ReactFlow, Background, Controls, MiniMap, useNodesState, 
+  useEdgesState, addEdge, Connection, Panel 
+} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Bot, MessageSquare, Copy, Zap, Key, ArrowRight, MessageSquarePlus, FileText, Plus, Save } from 'lucide-react';
+import { 
+  Bot, MessageSquare, Copy, Zap, Key, ArrowRight, 
+  MessageSquarePlus, FileText, Plus, Save, Trash2,
+  Code, MoreHorizontal
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, LogIn } from 'lucide-react';
@@ -17,8 +25,25 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Import custom node components
 import StartNode from '@/components/botflow/StartNode';
@@ -27,7 +52,9 @@ import ConditionNode from '@/components/botflow/ConditionNode';
 import AIAssistantNode from '@/components/botflow/AIAssistantNode';
 import { MenuNode } from '@/components/botflow/MenuNode';
 import KeywordTriggerNode from '@/components/botflow/KeywordTriggerNode';
+import FunctionNode from '@/components/botflow/FunctionNode';
 import CustomEdge from '@/components/botflow/CustomEdge';
+import ConnectionLine from '@/components/botflow/ConnectionLine';
 
 // Node types registry
 const nodeTypes = {
@@ -37,6 +64,7 @@ const nodeTypes = {
   aiAssistant: AIAssistantNode,
   menu: MenuNode,
   keywordTrigger: KeywordTriggerNode,
+  function: FunctionNode,
 };
 
 // Edge types registry
@@ -101,6 +129,12 @@ const BotFlowBuilder = () => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [newBotDialogOpen, setNewBotDialogOpen] = useState(false);
   const [newBotName, setNewBotName] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [flowToDelete, setFlowToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [functionDialogOpen, setFunctionDialogOpen] = useState(false);
+  const [functionCode, setFunctionCode] = useState('function process(input) {\n  // Your code here\n  return input;\n}');
+  const [functionName, setFunctionName] = useState('Process Function');
 
   // Check for authentication
   useEffect(() => {
@@ -171,6 +205,10 @@ const BotFlowBuilder = () => {
       position: { x: 250, y: nodes.length * 100 + 100 },
     };
     
+    if (type === 'function') {
+      newNode.data.functionCode = 'function process(input) {\n  return input;\n}';
+    }
+    
     setNodes((nds) => [...nds, newNode]);
     
     // If there's at least one node, connect to the last one
@@ -190,6 +228,19 @@ const BotFlowBuilder = () => {
       title: "Node Added",
       description: `Added ${label} node to the flow`,
     });
+  };
+
+  // Open function dialog
+  const handleAddFunctionNode = () => {
+    setFunctionName('Process Function');
+    setFunctionCode('function process(input) {\n  // Your code here\n  return input;\n}');
+    setFunctionDialogOpen(true);
+  };
+
+  // Create function node
+  const createFunctionNode = () => {
+    addNode('function', functionName);
+    setFunctionDialogOpen(false);
   };
 
   // Load a template flow
@@ -232,12 +283,14 @@ const BotFlowBuilder = () => {
           { id: 'menu-1', type: 'menu', data: { label: 'Product Interest', options: ['Basic Plan', 'Premium Plan', 'Enterprise Solution', 'Just Browsing'] }, position: { x: 250, y: 200 } },
           { id: 'message-2', type: 'message', data: { label: 'Collect Contact', message: 'Great choice! Could you share your email to receive more information?' }, position: { x: 250, y: 300 } },
           { id: 'aiAssistant-1', type: 'aiAssistant', data: { label: 'AI Sales Assistant', prompt: 'Respond to specific product questions and provide tailored recommendations' }, position: { x: 250, y: 400 } },
+          { id: 'function-1', type: 'function', data: { label: 'Data Processor', functionCode: 'function processLead(data) {\n  // Format user data for CRM\n  return {\n    email: data.email,\n    interest: data.selection\n  };\n}' }, position: { x: 250, y: 500 } },
         ];
         templateEdges = [
           { id: 'e1-2', source: 'start-1', target: 'message-1', type: 'custom', animated: true },
           { id: 'e2-3', source: 'message-1', target: 'menu-1', type: 'custom', animated: true },
           { id: 'e3-4', source: 'menu-1', target: 'message-2', type: 'custom', animated: true },
           { id: 'e4-5', source: 'message-2', target: 'aiAssistant-1', type: 'custom', animated: true },
+          { id: 'e5-6', source: 'aiAssistant-1', target: 'function-1', type: 'custom', animated: true },
         ];
       } else if (templateId === 'faq-flow') {
         // FAQ flow template
@@ -246,11 +299,13 @@ const BotFlowBuilder = () => {
           { id: 'keywordTrigger-1', type: 'keywordTrigger', data: { label: 'FAQ Keywords', keywords: ['pricing', 'features', 'subscription', 'cancel'] }, position: { x: 250, y: 100 } },
           { id: 'aiAssistant-1', type: 'aiAssistant', data: { label: 'FAQ AI Assistant', prompt: 'Answer frequently asked questions based on the knowledge base' }, position: { x: 250, y: 200 } },
           { id: 'message-1', type: 'message', data: { label: 'Fallback', message: "I'm sorry, I couldn't find information about that. Would you like to talk to a human agent?" }, position: { x: 250, y: 300 } },
+          { id: 'function-1', type: 'function', data: { label: 'Log Question', functionCode: 'function logUnansweredQuestion(question) {\n  // Log questions that could not be answered\n  console.log("Unanswered:", question);\n  return question;\n}' }, position: { x: 250, y: 400 } },
         ];
         templateEdges = [
           { id: 'e1-2', source: 'start-1', target: 'keywordTrigger-1', type: 'custom', animated: true },
           { id: 'e2-3', source: 'keywordTrigger-1', target: 'aiAssistant-1', type: 'custom', animated: true, label: 'Keyword Match' },
           { id: 'e2-4', source: 'keywordTrigger-1', target: 'message-1', type: 'custom', animated: true, label: 'No Match' },
+          { id: 'e4-5', source: 'message-1', target: 'function-1', type: 'custom', animated: true },
         ];
       } else if (typeof templateId === 'object' && templateId.id) {
         // Load a user-saved flow
@@ -301,6 +356,54 @@ const BotFlowBuilder = () => {
       title: "Flow Cloned",
       description: `Created a clone of "${flowName}"`,
     });
+  };
+
+  // Delete a flow
+  const handleDeleteFlow = (flow) => {
+    setFlowToDelete(flow);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteFlow = async () => {
+    if (!flowToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      const { error } = await supabase.functions.invoke('delete_bot_flow', {
+        body: { id: flowToDelete.id }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Flow Deleted",
+        description: `Deleted "${flowToDelete.name}" successfully`,
+      });
+      
+      // If the deleted flow was selected, reset to default
+      if (selectedFlow === flowToDelete.id) {
+        setNodes(initialNodes);
+        setEdges(initialEdges);
+        setFlowName('Untitled Flow');
+        setSelectedFlow(null);
+      }
+      
+      // Refresh the list
+      fetchUserFlows();
+      
+    } catch (error) {
+      console.error("Error deleting flow:", error);
+      toast({
+        title: "Delete Failed",
+        description: "There was an error deleting your flow",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setFlowToDelete(null);
+    }
   };
 
   // Add/edit trigger keywords
@@ -433,6 +536,22 @@ const BotFlowBuilder = () => {
   const handleSignIn = () => {
     navigate('/auth');
   };
+
+  // Panel controls for zooming and more flow operations
+  const PanelControls = () => (
+    <Panel position="top-right" className="bg-white p-2 rounded shadow-md border">
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={() => {}}>
+          <Plus className="h-4 w-4 mr-1" />
+          <span>Zoom In</span>
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => {}}>
+          <Minus className="h-4 w-4 mr-1" />
+          <span>Zoom Out</span>
+        </Button>
+      </div>
+    </Panel>
+  );
 
   if (isCheckingAuth) {
     return (
@@ -576,6 +695,15 @@ const BotFlowBuilder = () => {
                     <Key className="mr-2 h-4 w-4" />
                     Keyword Trigger
                   </Button>
+
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={handleAddFunctionNode}
+                  >
+                    <Code className="mr-2 h-4 w-4" />
+                    Function
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -598,6 +726,11 @@ const BotFlowBuilder = () => {
                     onConnect={onConnect}
                     nodeTypes={nodeTypes}
                     edgeTypes={edgeTypes}
+                    connectionLineComponent={ConnectionLine}
+                    defaultEdgeOptions={{
+                      type: 'custom',
+                      animated: true
+                    }}
                     fitView
                   >
                     <Controls />
@@ -643,15 +776,39 @@ const BotFlowBuilder = () => {
                 <Card 
                   key={flow.id} 
                   className={`cursor-pointer transition-all ${selectedFlow === flow.id ? 'border-primary ring-2 ring-primary/20' : 'hover:border-primary/50'}`}
-                  onClick={() => loadTemplate(flow)}
                 >
                   <CardHeader>
                     <div className="flex justify-center mb-2">
                       <FileText className="h-10 w-10 text-blue-500" />
                     </div>
                     <CardTitle className="text-center text-lg">{flow.name}</CardTitle>
+                    <div className="absolute top-2 right-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => loadTemplate(flow)}>
+                            Open
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteFlow(flow);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent onClick={() => loadTemplate(flow)}>
                     <p className="text-center text-muted-foreground">
                       Last updated: {new Date(flow.updated_at || flow.created_at).toLocaleDateString()}
                     </p>
@@ -765,6 +922,83 @@ const BotFlowBuilder = () => {
             >
               <Plus className="mr-2 h-4 w-4" />
               Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the bot flow
+              "{flowToDelete?.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteFlow}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Function Dialog */}
+      <Dialog open={functionDialogOpen} onOpenChange={setFunctionDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create Function Node</DialogTitle>
+            <DialogDescription>
+              Add JavaScript code to process data in your flow
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div>
+              <Label htmlFor="function-name">Function Name</Label>
+              <Input
+                id="function-name"
+                value={functionName}
+                onChange={(e) => setFunctionName(e.target.value)}
+                placeholder="Enter a name for your function"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="function-code">JavaScript Code</Label>
+              <Textarea
+                id="function-code"
+                value={functionCode}
+                onChange={(e) => setFunctionCode(e.target.value)}
+                placeholder="function process(input) {\n  // Your code here\n  return input;\n}"
+                className="mt-2 font-mono h-56"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setFunctionDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={createFunctionNode}
+              disabled={!functionName.trim() || !functionCode.trim()}
+            >
+              <Code className="mr-2 h-4 w-4" />
+              Add Function
             </Button>
           </DialogFooter>
         </DialogContent>

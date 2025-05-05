@@ -33,3 +33,6 @@ refresh_token_reuse_interval = 10
 
 [functions.get_user_bot_flows]
 verify_jwt = true
+
+[functions.delete_bot_flow]
+verify_jwt = true
