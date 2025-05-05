@@ -201,20 +201,22 @@ const BotFlowBuilder = () => {
 
   // Add a new node to the flow
   const addNode = (type, label) => {
+    let nodeData = { label };
+    
+    // For function nodes, add the functionCode property
+    if (type === 'function') {
+      nodeData = {
+        ...nodeData,
+        functionCode: 'function process(input) {\n  return input;\n}'
+      };
+    }
+    
     const newNode = {
       id: `${type}-${nodes.length + 1}`,
       type,
       position: { x: 250, y: nodes.length * 100 + 100 },
-      data: { label },
+      data: nodeData,
     };
-    
-    // For function nodes, add the functionCode property
-    if (type === 'function') {
-      newNode.data = {
-        ...newNode.data,
-        functionCode: 'function process(input) {\n  return input;\n}'
-      };
-    }
     
     setNodes((nds) => [...nds, newNode]);
     
