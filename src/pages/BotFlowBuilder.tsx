@@ -50,7 +50,7 @@ import ConditionNode from '@/components/botflow/ConditionNode';
 import AIAssistantNode from '@/components/botflow/AIAssistantNode';
 import { MenuNode } from '@/components/botflow/MenuNode';
 import KeywordTriggerNode from '@/components/botflow/KeywordTriggerNode';
-import FunctionNode from '@/components/botflow/FunctionNode';
+import FunctionNode, { FunctionNodeData } from '@/components/botflow/FunctionNode';
 import CustomEdge from '@/components/botflow/CustomEdge';
 import ConnectionLine from '@/components/botflow/ConnectionLine';
 import { FlowTemplateSelector } from '@/components/botflow/FlowTemplateSelector';
@@ -200,33 +200,39 @@ const BotFlowBuilder = () => {
   };
 
   // Add a new node to the flow
-  const addNode = (type, label) => {
-    let nodeData = { label };
-    
-    // For function nodes, add the functionCode property
+  const addNode = (type: string, label: string) => {
     if (type === 'function') {
-      nodeData = {
-        ...nodeData,
-        functionCode: 'function process(input) {\n  return input;\n}'
+      const nodeData: FunctionNodeData = {
+        label,
+        functionCode: 'function process(input) {\n  // Your code here\n  return input;\n}'
       };
+      
+      const newNode = {
+        id: `${type}-${nodes.length + 1}`,
+        type,
+        position: { x: 250, y: nodes.length * 100 + 100 },
+        data: nodeData,
+      };
+      
+      setNodes((nds) => [...nds, newNode]);
+    } else {
+      const newNode = {
+        id: `${type}-${nodes.length + 1}`,
+        type,
+        position: { x: 250, y: nodes.length * 100 + 100 },
+        data: { label },
+      };
+      
+      setNodes((nds) => [...nds, newNode]);
     }
-    
-    const newNode = {
-      id: `${type}-${nodes.length + 1}`,
-      type,
-      position: { x: 250, y: nodes.length * 100 + 100 },
-      data: nodeData,
-    };
-    
-    setNodes((nds) => [...nds, newNode]);
     
     // If there's at least one node, connect to the last one
     if (nodes.length > 0) {
       const lastNode = nodes[nodes.length - 1];
       const newEdge = {
-        id: `e${lastNode.id}-${newNode.id}`,
+        id: `e${lastNode.id}-${type}-${nodes.length + 1}`,
         source: lastNode.id,
-        target: newNode.id,
+        target: `${type}-${nodes.length + 1}`,
         type: 'custom',
         animated: true,
       };

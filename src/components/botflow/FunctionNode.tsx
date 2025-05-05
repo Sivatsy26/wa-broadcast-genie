@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Code } from 'lucide-react';
 
-interface FunctionNodeData {
+export interface FunctionNodeData {
   label: string;
   functionCode: string;
 }
