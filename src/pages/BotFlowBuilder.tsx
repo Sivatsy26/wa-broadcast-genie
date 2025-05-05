@@ -127,17 +127,18 @@ const BotFlowBuilder = () => {
   const fetchUserFlows = async () => {
     try {
       setIsLoading(true);
-      // Using raw SQL query to fetch data from bot_flows since it's not in the TypeScript types yet
-      const { data: flows, error } = await supabase
-        .rpc('get_user_bot_flows');
+      
+      // Use supabase functions.invoke instead of rpc
+      const { data: flows, error } = await supabase.functions.invoke('get_user_bot_flows');
       
       if (error) {
-        console.error("Error fetching flows using RPC:", error);
-        // Fallback to direct query with type casting
+        console.error("Error fetching flows using edge function:", error);
+        
+        // Fallback to direct query
         const { data: directFlows, error: directError } = await supabase
-          .from('bot_flows' as any)
+          .from('bot_flows')
           .select('*')
-          .order('created_at' as any, { ascending: false });
+          .order('created_at', { ascending: false });
         
         if (directError) throw directError;
         setUserFlows(directFlows || []);
@@ -379,9 +380,9 @@ const BotFlowBuilder = () => {
 
       let result;
       if (isUpdate) {
-        // Update existing flow using raw SQL query since TypeScript doesn't know about bot_flows yet
+        // Update existing flow
         const { data, error } = await supabase
-          .from('bot_flows' as any)
+          .from('bot_flows')
           .update(flowData)
           .eq('id', selectedFlow)
           .select();
@@ -389,9 +390,9 @@ const BotFlowBuilder = () => {
         if (error) throw error;
         result = data[0];
       } else {
-        // Create new flow using raw SQL query
+        // Create new flow
         const { data, error } = await supabase
-          .from('bot_flows' as any)
+          .from('bot_flows')
           .insert(flowData)
           .select();
         
