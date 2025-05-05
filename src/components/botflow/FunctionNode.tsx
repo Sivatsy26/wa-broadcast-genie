@@ -5,7 +5,7 @@ import { Code } from 'lucide-react';
 
 interface FunctionNodeData {
   label: string;
-  functionCode?: string;
+  functionCode: string;
 }
 
 interface FunctionNodeProps {
