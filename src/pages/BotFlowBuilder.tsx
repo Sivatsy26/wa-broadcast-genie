@@ -11,7 +11,7 @@ import {
   Bot, MessageSquare, Copy, Zap, Key, ArrowRight, 
   MessageSquarePlus, FileText, Plus, Save, Trash2,
   Code, MoreHorizontal, Minus, Loader2, LogIn,
-  Info, Facebook, Instagram, Link, Globe, Telegram
+  Info, Facebook, Instagram, Link, Globe
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -927,10 +927,10 @@ const BotFlowBuilder = () => {
                   </div>
                 </div>
 
-                {/* New Telegram Section */}
+                {/* Telegram Section */}
                 <div>
                   <h3 className="font-medium mb-3 flex items-center">
-                    <Telegram className="h-4 w-4 mr-2 text-blue-500" />
+                    <MessageSquare className="h-4 w-4 mr-2 text-blue-500" />
                     Telegram Accounts
                   </h3>
                   <div className="flex flex-wrap gap-3">
@@ -953,7 +953,7 @@ const BotFlowBuilder = () => {
                   </div>
                 </div>
 
-                {/* New Website Widget Section */}
+                {/* Website Widget Section */}
                 <div>
                   <h3 className="font-medium mb-3 flex items-center">
                     <Globe className="h-4 w-4 mr-2 text-green-600" />
