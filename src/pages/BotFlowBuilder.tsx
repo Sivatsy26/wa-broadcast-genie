@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,7 +11,7 @@ import {
   Bot, MessageSquare, Copy, Zap, Key, ArrowRight, 
   MessageSquarePlus, FileText, Plus, Save, Trash2,
   Code, MoreHorizontal, Minus, Loader2, LogIn,
-  Info, Facebook, Instagram, Link
+  Info, Facebook, Instagram, Link, Globe, Telegram
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -134,14 +133,16 @@ const BotFlowBuilder = () => {
   const [functionDialogOpen, setFunctionDialogOpen] = useState(false);
   const [functionCode, setFunctionCode] = useState('function process(input) {\n  // Your code here\n  return input;\n}');
   const [functionName, setFunctionName] = useState('Process Function');
-  const [platforms, setPlatforms] = useState(['whatsapp', 'facebook', 'instagram']);
+  const [platforms, setPlatforms] = useState(['whatsapp', 'facebook', 'instagram', 'telegram', 'website']);
   const [selectedPlatforms, setSelectedPlatforms] = useState(['whatsapp']);
   const [planDetailsOpen, setPlanDetailsOpen] = useState(false);
   const [currentPlan, setCurrentPlan] = useState("Pro"); // This should come from user data in a real app
   const [platformLimits, setPlatformLimits] = useState({
     whatsapp: 5,
     facebook: 5,
-    instagram: 5
+    instagram: 5,
+    telegram: 5,
+    website: 5
   });
 
   // Check for authentication
@@ -451,11 +452,12 @@ const BotFlowBuilder = () => {
       }
 
       // Check if adding would exceed the platform-specific limit
-      const platformCount = countPlatformSelections(platform);
-      if (platformCount >= platformLimits[platform]) {
+      const platformType = platform.split('-')[0]; // Extract 'whatsapp', 'facebook', etc.
+      const platformCount = countPlatformSelections(platformType);
+      if (platformCount >= platformLimits[platformType]) {
         toast({
-          title: `${platform} account limit reached`,
-          description: `Your plan allows ${platformLimits[platform]} ${platform} accounts. Upgrade for more.`,
+          title: `${platformType} account limit reached`,
+          description: `Your plan allows ${platformLimits[platformType]} ${platformType} accounts. Upgrade for more.`,
           variant: "destructive",
         });
         return;
@@ -470,8 +472,8 @@ const BotFlowBuilder = () => {
   };
 
   // Count how many selections of a specific platform are already made
-  const countPlatformSelections = (platformName) => {
-    return selectedPlatforms.filter(p => p === platformName).length;
+  const countPlatformSelections = (platformType) => {
+    return selectedPlatforms.filter(p => p.startsWith(platformType)).length;
   };
 
   // Get total platform limit based on plan
@@ -732,6 +734,12 @@ const BotFlowBuilder = () => {
                   {selectedPlatforms.includes('instagram') && (
                     <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Instagram</span>
                   )}
+                  {selectedPlatforms.includes('telegram') && (
+                    <span className="bg-blue-500 text-blue-800 text-xs px-2 py-1 rounded">Telegram</span>
+                  )}
+                  {selectedPlatforms.includes('website') && (
+                    <span className="bg-green-600 text-green-800 text-xs px-2 py-1 rounded">Website Widget</span>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="p-0 h-[calc(100%-60px)]">
@@ -826,7 +834,7 @@ const BotFlowBuilder = () => {
             <CardContent>
               <div className="mb-4">
                 <p className="text-sm text-muted-foreground mb-2">
-                  Your {currentPlan} plan allows {platformLimits.whatsapp} WhatsApp, {platformLimits.facebook} Facebook and {platformLimits.instagram} Instagram accounts
+                  Your {currentPlan} plan allows {platformLimits.whatsapp} WhatsApp, {platformLimits.facebook} Facebook, {platformLimits.instagram} Instagram, {platformLimits.telegram} Telegram and {platformLimits.website} Website Widget accounts
                 </p>
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div 
@@ -908,6 +916,58 @@ const BotFlowBuilder = () => {
                         onClick={() => handlePlatformChange(`instagram-${i}`)}
                       >
                         Instagram {i + 1}
+                      </Button>
+                    ))}
+                    {currentPlan !== "Enterprise" && (
+                      <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add More
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* New Telegram Section */}
+                <div>
+                  <h3 className="font-medium mb-3 flex items-center">
+                    <Telegram className="h-4 w-4 mr-2 text-blue-500" />
+                    Telegram Accounts
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {Array.from({ length: Math.min(platformLimits.telegram, 8) }, (_, i) => (
+                      <Button 
+                        key={`telegram-${i}`}
+                        variant={selectedPlatforms.includes(`telegram-${i}`) ? "default" : "outline"}
+                        className={selectedPlatforms.includes(`telegram-${i}`) ? "bg-blue-500 hover:bg-blue-600" : ""}
+                        onClick={() => handlePlatformChange(`telegram-${i}`)}
+                      >
+                        Telegram {i + 1}
+                      </Button>
+                    ))}
+                    {currentPlan !== "Enterprise" && (
+                      <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add More
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* New Website Widget Section */}
+                <div>
+                  <h3 className="font-medium mb-3 flex items-center">
+                    <Globe className="h-4 w-4 mr-2 text-green-600" />
+                    Website Widget
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {Array.from({ length: Math.min(platformLimits.website, 8) }, (_, i) => (
+                      <Button 
+                        key={`website-${i}`}
+                        variant={selectedPlatforms.includes(`website-${i}`) ? "default" : "outline"}
+                        className={selectedPlatforms.includes(`website-${i}`) ? "bg-green-600 hover:bg-green-700" : ""}
+                        onClick={() => handlePlatformChange(`website-${i}`)}
+                      >
+                        Widget {i + 1}
                       </Button>
                     ))}
                     {currentPlan !== "Enterprise" && (

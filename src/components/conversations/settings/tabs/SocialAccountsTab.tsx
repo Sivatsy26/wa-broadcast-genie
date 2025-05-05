@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
+import { Facebook, Instagram, Telegram, Link, Globe } from 'lucide-react';
 
 interface SocialAccountsTabProps {
   userRole: string;
@@ -18,6 +18,8 @@ const SocialAccountsTab: React.FC<SocialAccountsTabProps> = ({ userRole }) => {
     { id: 'instagram', name: 'Instagram', connected: false, username: '', autoPost: false },
     { id: 'linkedin', name: 'LinkedIn', connected: true, username: 'john-doe', autoPost: true },
     { id: 'youtube', name: 'YouTube', connected: false, username: '', autoPost: false },
+    { id: 'telegram', name: 'Telegram', connected: false, username: '', autoPost: false },
+    { id: 'website', name: 'Website Widget', connected: false, username: '', autoPost: false },
   ]);
 
   const handleConnect = (accountId: string) => {
@@ -62,6 +64,23 @@ const SocialAccountsTab: React.FC<SocialAccountsTabProps> = ({ userRole }) => {
     });
   };
 
+  const getSocialIcon = (accountId: string) => {
+    switch(accountId) {
+      case 'facebook':
+        return <Facebook className="h-4 w-4 text-blue-600" />;
+      case 'instagram':
+        return <Instagram className="h-4 w-4 text-purple-600" />;
+      case 'telegram':
+        return <Telegram className="h-4 w-4 text-blue-500" />;
+      case 'website':
+        return <Globe className="h-4 w-4 text-green-600" />;
+      default:
+        return <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+          {accountId.substring(0, 1).toUpperCase()}
+        </div>;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -78,7 +97,7 @@ const SocialAccountsTab: React.FC<SocialAccountsTabProps> = ({ userRole }) => {
               <div key={account.id} className="flex items-center justify-between border-b pb-3">
                 <div className="flex items-center">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
-                    {account.id.substring(0, 1).toUpperCase()}
+                    {getSocialIcon(account.id)}
                   </div>
                   <div>
                     <p className="font-medium">{account.name}</p>
