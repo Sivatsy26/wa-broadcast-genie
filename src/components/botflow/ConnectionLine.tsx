@@ -1,6 +1,15 @@
 
 import React from 'react';
-import { getBezierPath } from '@xyflow/react';
+import { getBezierPath, Position } from '@xyflow/react';
+
+interface ConnectionLineProps {
+  fromX: number;
+  fromY: number;
+  fromPosition: Position;
+  toX: number;
+  toY: number;
+  toPosition: Position;
+}
 
 export default function ConnectionLine({
   fromX,
@@ -9,7 +18,7 @@ export default function ConnectionLine({
   toX,
   toY,
   toPosition,
-}) {
+}: ConnectionLineProps) {
   const [edgePath] = getBezierPath({
     sourceX: fromX,
     sourceY: fromY,

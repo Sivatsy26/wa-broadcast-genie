@@ -3,7 +3,15 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Code } from 'lucide-react';
 
-const FunctionNode = ({ data, selected }) => {
+interface FunctionNodeProps {
+  data: {
+    label: string;
+    functionCode?: string;
+  };
+  selected: boolean;
+}
+
+const FunctionNode = ({ data, selected }: FunctionNodeProps) => {
   return (
     <div className={`px-3 py-2 shadow-md rounded-md bg-white border-2 ${selected ? 'border-blue-500' : 'border-gray-200'}`}>
       <div className="flex items-center gap-2">

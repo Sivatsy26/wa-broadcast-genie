@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,7 +10,7 @@ import '@xyflow/react/dist/style.css';
 import { 
   Bot, MessageSquare, Copy, Zap, Key, ArrowRight, 
   MessageSquarePlus, FileText, Plus, Save, Trash2,
-  Code, MoreHorizontal
+  Code, MoreHorizontal, Minus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -162,7 +161,6 @@ const BotFlowBuilder = () => {
     try {
       setIsLoading(true);
       
-      // Use supabase functions.invoke instead of rpc
       const { data: flows, error } = await supabase.functions.invoke('get_user_bot_flows');
       
       if (error) {
