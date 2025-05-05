@@ -11,7 +11,7 @@ import {
   Bot, MessageSquare, Copy, Zap, Key, ArrowRight, 
   MessageSquarePlus, FileText, Plus, Save, Trash2,
   Code, MoreHorizontal, Minus, Loader2, LogIn,
-  Info, Facebook, Instagram, Link, Globe
+  Info, Facebook, Instagram, Link, Globe, Settings
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
