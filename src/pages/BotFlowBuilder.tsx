@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,10 @@ import '@xyflow/react/dist/style.css';
 import { 
   Bot, MessageSquare, Copy, Zap, Key, ArrowRight, 
   MessageSquarePlus, FileText, Plus, Save, Trash2,
-  Code, MoreHorizontal, Minus
+  Code, MoreHorizontal, Minus, Loader2, LogIn
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, LogIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
@@ -54,6 +53,10 @@ import KeywordTriggerNode from '@/components/botflow/KeywordTriggerNode';
 import FunctionNode from '@/components/botflow/FunctionNode';
 import CustomEdge from '@/components/botflow/CustomEdge';
 import ConnectionLine from '@/components/botflow/ConnectionLine';
+import { FlowTemplateSelector } from '@/components/botflow/FlowTemplateSelector';
+import { NodePalette } from '@/components/botflow/NodePalette';
+import { KeywordManager } from '@/components/botflow/KeywordManager';
+import { SavedFlowsList } from '@/components/botflow/SavedFlowsList';
 
 // Node types registry
 const nodeTypes = {
@@ -134,6 +137,8 @@ const BotFlowBuilder = () => {
   const [functionDialogOpen, setFunctionDialogOpen] = useState(false);
   const [functionCode, setFunctionCode] = useState('function process(input) {\n  // Your code here\n  return input;\n}');
   const [functionName, setFunctionName] = useState('Process Function');
+  const [platforms, setPlatforms] = useState(['whatsapp', 'facebook', 'instagram']);
+  const [selectedPlatforms, setSelectedPlatforms] = useState(['whatsapp']);
 
   // Check for authentication
   useEffect(() => {
@@ -352,7 +357,7 @@ const BotFlowBuilder = () => {
     const clonedEdges = JSON.parse(JSON.stringify(edges));
 
     // Save the cloned flow with a new name
-    saveFlowToDb(`${flowName} (Clone)`, clonedNodes, clonedEdges, [...triggerKeywords]);
+    saveFlowToDb(`${flowName} (Clone)`, clonedNodes, clonedEdges, [...triggerKeywords], [...selectedPlatforms]);
 
     toast({
       title: "Flow Cloned",
@@ -418,6 +423,15 @@ const BotFlowBuilder = () => {
     });
   };
 
+  // Handle platform selection
+  const handlePlatformChange = (platform) => {
+    setSelectedPlatforms(current => 
+      current.includes(platform)
+        ? current.filter(p => p !== platform)
+        : [...current, platform]
+    );
+  };
+
   // Open save dialog
   const openSaveDialog = () => {
     setSaveDialogOpen(true);
@@ -443,6 +457,7 @@ const BotFlowBuilder = () => {
     setNodes(initialNodes);
     setEdges(initialEdges);
     setTriggerKeywords(['help', 'support']);
+    setSelectedPlatforms(['whatsapp']);
     setSelectedFlow(null);
     setNewBotDialogOpen(false);
     setNewBotName('');
@@ -454,7 +469,13 @@ const BotFlowBuilder = () => {
   };
 
   // Save the current flow to the database
-  const saveFlowToDb = async (name = flowName, flowNodes = nodes, flowEdges = edges, keywords = triggerKeywords) => {
+  const saveFlowToDb = async (
+    name = flowName, 
+    flowNodes = nodes, 
+    flowEdges = edges, 
+    keywords = triggerKeywords,
+    platforms = selectedPlatforms
+  ) => {
     if (!isAuthenticated) {
       toast({
         title: "Authentication Required",
@@ -475,6 +496,7 @@ const BotFlowBuilder = () => {
         flow_data: {
           nodes: flowNodes,
           edges: flowEdges,
+          platforms: platforms
         },
         keywords: keywords,
         user_id: userData.user.id
@@ -539,22 +561,6 @@ const BotFlowBuilder = () => {
     navigate('/auth');
   };
 
-  // Panel controls for zooming and more flow operations
-  const PanelControls = () => (
-    <Panel position="top-right" className="bg-white p-2 rounded shadow-md border">
-      <div className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={() => {}}>
-          <Plus className="h-4 w-4 mr-1" />
-          <span>Zoom In</span>
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => {}}>
-          <Minus className="h-4 w-4 mr-1" />
-          <span>Zoom Out</span>
-        </Button>
-      </div>
-    </Panel>
-  );
-
   if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
@@ -570,7 +576,7 @@ const BotFlowBuilder = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Bot Flow Builder</h1>
             <p className="text-muted-foreground">
-              Design complex chat interactions with a drag-and-drop interface
+              Design chat flows for WhatsApp, Facebook & Instagram
             </p>
           </div>
         </div>
@@ -600,7 +606,7 @@ const BotFlowBuilder = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Bot Flow Builder</h1>
           <p className="text-muted-foreground">
-            Design complex chat interactions with a drag-and-drop interface
+            Design chat flows for WhatsApp, Facebook & Instagram
           </p>
         </div>
         
@@ -638,81 +644,32 @@ const BotFlowBuilder = () => {
       </div>
       
       <Tabs defaultValue="editor" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-4">
+        <TabsList className="grid w-full max-w-md grid-cols-5">
           <TabsTrigger value="editor">Flow Editor</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="saved">My Bots</TabsTrigger>
-          <TabsTrigger value="keywords">Trigger Keywords</TabsTrigger>
+          <TabsTrigger value="keywords">Triggers</TabsTrigger>
+          <TabsTrigger value="platforms">Platforms</TabsTrigger>
         </TabsList>
         
         <TabsContent value="editor" className="mt-4">
           <div className="grid grid-cols-5 gap-4">
-            <Card className="col-span-1">
-              <CardHeader>
-                <CardTitle className="text-lg">Add Components</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flow-node-buttons space-y-2">
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => addNode('message', 'Message')}
-                  >
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Message
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => addNode('menu', 'Menu Options')}
-                  >
-                    <MessageSquarePlus className="mr-2 h-4 w-4" />
-                    Menu
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => addNode('condition', 'Condition')}
-                  >
-                    <ArrowRight className="mr-2 h-4 w-4" />
-                    Condition
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => addNode('aiAssistant', 'AI Assistant')}
-                  >
-                    <Zap className="mr-2 h-4 w-4" />
-                    AI Assistant
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => addNode('keywordTrigger', 'Keyword Trigger')}
-                  >
-                    <Key className="mr-2 h-4 w-4" />
-                    Keyword Trigger
-                  </Button>
-
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={handleAddFunctionNode}
-                  >
-                    <Code className="mr-2 h-4 w-4" />
-                    Function
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <NodePalette addNode={addNode} handleAddFunctionNode={handleAddFunctionNode} />
             
             <Card className="col-span-4 h-[70vh]">
               <CardHeader className="py-3 px-4 border-b flex flex-row justify-between items-center">
                 <CardTitle className="text-lg">{flowName}</CardTitle>
+                <div className="flex items-center gap-2">
+                  {selectedPlatforms.includes('whatsapp') && (
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">WhatsApp</span>
+                  )}
+                  {selectedPlatforms.includes('facebook') && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Facebook</span>
+                  )}
+                  {selectedPlatforms.includes('instagram') && (
+                    <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Instagram</span>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="p-0 h-[calc(100%-60px)]">
                 {isLoading ? (
@@ -738,6 +695,18 @@ const BotFlowBuilder = () => {
                     <Controls />
                     <MiniMap />
                     <Background gap={16} size={1} />
+                    <Panel position="top-right" className="bg-white p-2 rounded shadow-md border">
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">
+                          <Plus className="h-4 w-4 mr-1" />
+                          <span>Zoom In</span>
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Minus className="h-4 w-4 mr-1" />
+                          <span>Zoom Out</span>
+                        </Button>
+                      </div>
+                    </Panel>
                   </ReactFlow>
                 )}
               </CardContent>
@@ -746,101 +715,22 @@ const BotFlowBuilder = () => {
         </TabsContent>
         
         <TabsContent value="templates" className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {flowTemplates.map((template) => (
-              <Card 
-                key={template.id} 
-                className={`cursor-pointer transition-all ${selectedFlow === template.id ? 'border-primary ring-2 ring-primary/20' : 'hover:border-primary/50'}`}
-                onClick={() => loadTemplate(template.id)}
-              >
-                <CardHeader>
-                  <div className="flex justify-center mb-2">
-                    {template.icon}
-                  </div>
-                  <CardTitle className="text-center text-lg">{template.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-center text-muted-foreground">{template.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <FlowTemplateSelector 
+            templates={flowTemplates} 
+            selectedTemplate={selectedFlow}
+            onSelectTemplate={loadTemplate}
+          />
         </TabsContent>
         
         <TabsContent value="saved" className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {isLoading ? (
-              <div className="col-span-full flex items-center justify-center h-40">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : userFlows.length > 0 ? (
-              userFlows.map((flow) => (
-                <Card 
-                  key={flow.id} 
-                  className={`cursor-pointer transition-all ${selectedFlow === flow.id ? 'border-primary ring-2 ring-primary/20' : 'hover:border-primary/50'}`}
-                >
-                  <CardHeader>
-                    <div className="flex justify-center mb-2">
-                      <FileText className="h-10 w-10 text-blue-500" />
-                    </div>
-                    <CardTitle className="text-center text-lg">{flow.name}</CardTitle>
-                    <div className="absolute top-2 right-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Actions</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => loadTemplate(flow)}>
-                            Open
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteFlow(flow);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardHeader>
-                  <CardContent onClick={() => loadTemplate(flow)}>
-                    <p className="text-center text-muted-foreground">
-                      Last updated: {new Date(flow.updated_at || flow.created_at).toLocaleDateString()}
-                    </p>
-                    {flow.keywords && flow.keywords.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1 justify-center">
-                        {flow.keywords.slice(0, 3).map((keyword, i) => (
-                          <span key={i} className="bg-muted px-2 py-0.5 text-xs rounded-full">{keyword}</span>
-                        ))}
-                        {flow.keywords.length > 3 && (
-                          <span className="bg-muted px-2 py-0.5 text-xs rounded-full">+{flow.keywords.length - 3} more</span>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="col-span-full flex flex-col items-center justify-center h-40 text-muted-foreground">
-                <p>You don't have any saved bots yet</p>
-                <Button 
-                  variant="outline" 
-                  className="mt-4"
-                  onClick={openNewBotDialog}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create New Bot
-                </Button>
-              </div>
-            )}
-          </div>
+          <SavedFlowsList 
+            flows={userFlows}
+            selectedFlow={selectedFlow}
+            isLoading={isLoading}
+            onLoadFlow={loadTemplate}
+            onDeleteFlow={handleDeleteFlow}
+            onCreateNew={openNewBotDialog}
+          />
         </TabsContent>
         
         <TabsContent value="keywords" className="mt-4">
@@ -848,6 +738,42 @@ const BotFlowBuilder = () => {
             keywords={triggerKeywords} 
             onChange={handleKeywordChange} 
           />
+        </TabsContent>
+        
+        <TabsContent value="platforms" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Platform Selection</CardTitle>
+              <CardDescription>
+                Choose which platforms this bot should be active on
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <Button 
+                  variant={selectedPlatforms.includes('whatsapp') ? "default" : "outline"}
+                  className={selectedPlatforms.includes('whatsapp') ? "bg-green-600 hover:bg-green-700" : ""}
+                  onClick={() => handlePlatformChange('whatsapp')}
+                >
+                  WhatsApp
+                </Button>
+                <Button 
+                  variant={selectedPlatforms.includes('facebook') ? "default" : "outline"}
+                  className={selectedPlatforms.includes('facebook') ? "bg-blue-600 hover:bg-blue-700" : ""}
+                  onClick={() => handlePlatformChange('facebook')}
+                >
+                  Facebook Messenger
+                </Button>
+                <Button 
+                  variant={selectedPlatforms.includes('instagram') ? "default" : "outline"}
+                  className={selectedPlatforms.includes('instagram') ? "bg-purple-600 hover:bg-purple-700" : ""}
+                  onClick={() => handlePlatformChange('instagram')}
+                >
+                  Instagram
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -1006,75 +932,6 @@ const BotFlowBuilder = () => {
         </DialogContent>
       </Dialog>
     </div>
-  );
-};
-
-// Component to manage trigger keywords
-const KeywordManager = ({ keywords, onChange }) => {
-  const [newKeyword, setNewKeyword] = useState('');
-  const { toast } = useToast();
-  
-  const handleAddKeyword = () => {
-    if (!newKeyword.trim()) return;
-    if (keywords.includes(newKeyword.trim())) {
-      toast({
-        title: "Keyword already exists",
-        description: "This trigger keyword already exists",
-        variant: "destructive",
-      });
-      return;
-    }
-    onChange([...keywords, newKeyword.trim()]);
-    setNewKeyword('');
-  };
-  
-  const handleRemoveKeyword = (keyword) => {
-    onChange(keywords.filter(k => k !== keyword));
-  };
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Trigger Keywords</CardTitle>
-        <CardDescription>
-          Set up various trigger keywords for this bot to handle different scenarios
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex space-x-2 mb-4">
-          <input
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            placeholder="Enter a keyword..."
-            value={newKeyword}
-            onChange={(e) => setNewKeyword(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleAddKeyword();
-              }
-            }}
-          />
-          <Button onClick={handleAddKeyword}>Add</Button>
-        </div>
-        
-        <div className="flex flex-wrap gap-2">
-          {keywords.map((keyword) => (
-            <div
-              key={keyword}
-              className="bg-muted px-3 py-1 rounded-full flex items-center gap-2"
-            >
-              <Key className="h-3.5 w-3.5" />
-              <span>{keyword}</span>
-              <button
-                className="text-muted-foreground hover:text-foreground"
-                onClick={() => handleRemoveKeyword(keyword)}
-              >
-                &times;
-              </button>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
   );
 };
 

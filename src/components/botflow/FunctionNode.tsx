@@ -3,11 +3,13 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Code } from 'lucide-react';
 
+interface FunctionNodeData {
+  label: string;
+  functionCode?: string;
+}
+
 interface FunctionNodeProps {
-  data: {
-    label: string;
-    functionCode?: string;
-  };
+  data: FunctionNodeData;
   selected: boolean;
 }
 
