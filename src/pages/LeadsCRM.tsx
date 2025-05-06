@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import {
   Card,
@@ -875,3 +876,136 @@ const LeadsCRM = () => {
                         href={`mailto:${lead.email}`}
                         className="text-blue-500 hover:underline"
                       >
+                        {lead.email}
+                      </a>
+                    </TableCell>
+                    <TableCell>{lead.phone}</TableCell>
+                    <TableCell>{getStatusBadge(lead.status)}</TableCell>
+                    <TableCell>{lead.source}</TableCell>
+                    <TableCell>{new Date(lead.created).toLocaleDateString()}</TableCell>
+                    <TableCell>{lead.lastContact ? new Date(lead.lastContact).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{lead.nextFollowUp ? new Date(lead.nextFollowUp).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{lead.assignedTo}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditLead(lead)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500"
+                          onClick={() => handleDeleteLead(lead.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        {/* Clients Table */}
+        <TabsContent value="clients" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Input
+                type="text"
+                placeholder="Search clients..."
+                className="max-w-sm mr-2"
+              />
+              <Button variant="outline" size="sm">
+                <Search className="mr-2 h-4 w-4" />
+                Search
+              </Button>
+            </div>
+            <Button variant="outline" size="sm">
+              <Filter className="mr-2 h-4 w-4" />
+              Filter
+            </Button>
+          </div>
+
+          <div className="relative overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Users className="h-4 w-4" />
+                  </TableHead>
+                  <TableHead>Customer ID</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Referred By</TableHead>
+                  <TableHead>Join Date</TableHead>
+                  <TableHead>Renewal Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {clientsData.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell className="font-medium">
+                      <Avatar>
+                        <AvatarImage src={client.avatar || ""} alt={client.name} />
+                        <AvatarFallback>
+                          <Users className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell>{client.customerId}</TableCell>
+                    <TableCell>{client.name}</TableCell>
+                    <TableCell>{client.company}</TableCell>
+                    <TableCell>
+                      <a
+                        href={`mailto:${client.email}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        {client.email}
+                      </a>
+                    </TableCell>
+                    <TableCell>{client.phone}</TableCell>
+                    <TableCell>{getPlanBadge(client.plan)}</TableCell>
+                    <TableCell>{client.referredBy}</TableCell>
+                    <TableCell>{new Date(client.joinDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(client.renewalDate).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditClient(client)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500"
+                          onClick={() => handleDeleteClient(client.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default LeadsCRM;
