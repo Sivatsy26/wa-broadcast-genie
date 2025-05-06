@@ -370,6 +370,7 @@ const LeadsCRM = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Header section */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Leads & Clients</h1>
@@ -378,7 +379,9 @@ const LeadsCRM = () => {
           </p>
         </div>
         
+        {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2">
+          {/* Add Lead Dialog */}
           <Dialog open={newLeadDialogOpen} onOpenChange={setNewLeadDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -493,6 +496,7 @@ const LeadsCRM = () => {
             </DialogContent>
           </Dialog>
           
+          {/* Add Client Dialog */}
           <Dialog open={newClientDialogOpen} onOpenChange={setNewClientDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -585,6 +589,7 @@ const LeadsCRM = () => {
         </div>
       </div>
 
+      {/* Tabs Navigation */}
       <Tabs defaultValue="leads" onValueChange={setActiveTab}>
         <div className="flex justify-between items-center mb-4">
           <TabsList>
