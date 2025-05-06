@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -82,7 +81,7 @@ const PlatformConnectDialog: React.FC<PlatformConnectDialogProps> = ({
       }, 1000);
 
       // Generate mock QR code when dialog opens
-      if (qrCodeStatus === 'generating') {
+      if (qrCodeStatus as string === "generating") {
         setTimeout(() => {
           // Mock QR code - in a real implementation this would come from WhatsApp API
           setQrCodeUrl('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=whatsapp-mock-connection-code');
