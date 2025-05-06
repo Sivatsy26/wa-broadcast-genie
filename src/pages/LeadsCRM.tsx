@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Card,
@@ -902,4 +903,815 @@ const LeadsCRM = () => {
                     <div className="space-y-2">
                       <div className="flex items-start gap-2">
                         <div className="w-4 h-4 mt-0.5">
-                          <UserPlus className="h-4 w-4 text-muted-foreground
+                          <UserPlus className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <span>Source: {selectedLead.source}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-4 h-4 mt-0.5">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <span>Last Contact: {selectedLead.lastContact ? new Date(selectedLead.lastContact).toLocaleDateString() : 'Never'}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-4 h-4 mt-0.5">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <span>Next Follow-up: {selectedLead.nextFollowUp ? new Date(selectedLead.nextFollowUp).toLocaleString() : 'Not scheduled'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Assigned To</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        {selectedLead.assignedTo !== 'Unassigned'
+                          ? selectedLead.assignedTo.split(' ').map(n => n[0]).join('')
+                          : '?'}
+                      </div>
+                      <span>{selectedLead.assignedTo}</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Actions</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        variant="outline" 
+                        className="justify-start" 
+                        onClick={() => {
+                          setFollowUpDialogOpen(true);
+                          setLeadDetailsOpen(false);
+                        }}
+                      >
+                        <CalendarCheck className="mr-2 h-4 w-4" />
+                        Schedule Follow-up
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="justify-start"
+                        onClick={() => {
+                          setMessageDialogOpen(true);
+                          setLeadDetailsOpen(false);
+                        }}
+                      >
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Send Message
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="justify-start"
+                        onClick={() => {
+                          setNotesDialogOpen(true);
+                          setLeadDetailsOpen(false);
+                        }}
+                      >
+                        <ClipboardList className="mr-2 h-4 w-4" />
+                        Add Notes
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="justify-start"
+                        onClick={() => {
+                          setMoveToClientDialogOpen(true);
+                          setLeadDetailsOpen(false);
+                        }}
+                      >
+                        <UserCheck className="mr-2 h-4 w-4" />
+                        Convert to Client
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Pipeline Progress</h3>
+                  <span className="text-xs text-muted-foreground">
+                    {['new', 'contacted', 'qualified', 'proposal', 'converted'].indexOf(selectedLead.status) + 1}/5
+                  </span>
+                </div>
+                <Progress 
+                  className="h-2" 
+                  value={(((['new', 'contacted', 'qualified', 'proposal', 'converted'].indexOf(selectedLead.status) + 1) / 5) * 100)} 
+                />
+              </div>
+            </div>
+            
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditLeadDialogOpen(true);
+                  setLeadDetailsOpen(false);
+                }}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Lead
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setDeleteLeadDialogOpen(true);
+                  setLeadDetailsOpen(false);
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Lead
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Client Details Dialog */}
+      <Dialog open={clientDetailsOpen} onOpenChange={setClientDetailsOpen}>
+        {selectedClient && (
+          <DialogContent className="sm:max-w-[700px]">
+            <DialogHeader>
+              <DialogTitle className="text-xl">{selectedClient.name}</DialogTitle>
+              <div className="flex items-center gap-2 mt-1">
+                {getPlanBadge(selectedClient.plan)}
+                <span className="text-sm text-muted-foreground">
+                  Client since {new Date(selectedClient.joinDate).toLocaleDateString()}
+                </span>
+              </div>
+            </DialogHeader>
+            
+            <div className="grid gap-6 py-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Contact Information</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedClient.company}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedClient.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedClient.phone}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Subscription Details</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <div className="w-4 h-4 mt-0.5">
+                          <Briefcase className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <span>Plan: {selectedClient.plan.charAt(0).toUpperCase() + selectedClient.plan.slice(1)}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-4 h-4 mt-0.5">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <span>Renewal Date: {new Date(selectedClient.renewalDate).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-4 h-4 mt-0.5">
+                          <UserPlus className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <span>Referred By: {selectedClient.referredBy}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Actions</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        variant="outline" 
+                        className="justify-start"
+                        onClick={() => {
+                          setManageSubscriptionDialogOpen(true);
+                          setClientDetailsOpen(false);
+                        }}
+                      >
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        Manage Subscription
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="justify-start"
+                        onClick={() => {
+                          setClientMessageDialogOpen(true);
+                          setClientDetailsOpen(false);
+                        }}
+                      >
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Send Message
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditClientDialogOpen(true);
+                  setClientDetailsOpen(false);
+                }}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Client
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setDeleteClientDialogOpen(true);
+                  setClientDetailsOpen(false);
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Client
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Edit Lead Dialog */}
+      <Dialog open={editLeadDialogOpen} onOpenChange={setEditLeadDialogOpen}>
+        {selectedLead && (
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit Lead</DialogTitle>
+              <DialogDescription>
+                Update information for {selectedLead.name}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lead-name">Full Name</Label>
+                  <Input id="edit-lead-name" defaultValue={selectedLead.name} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lead-company">Company</Label>
+                  <Input id="edit-lead-company" defaultValue={selectedLead.company} />
+                </div>
+              </div>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lead-email">Email</Label>
+                  <Input id="edit-lead-email" type="email" defaultValue={selectedLead.email} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lead-phone">Phone</Label>
+                  <Input id="edit-lead-phone" defaultValue={selectedLead.phone} />
+                </div>
+              </div>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lead-status">Status</Label>
+                  <Select defaultValue={selectedLead.status}>
+                    <SelectTrigger id="edit-lead-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="contacted">Contacted</SelectItem>
+                      <SelectItem value="qualified">Qualified</SelectItem>
+                      <SelectItem value="proposal">Proposal</SelectItem>
+                      <SelectItem value="converted">Converted</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lead-source">Source</Label>
+                  <Input id="edit-lead-source" defaultValue={selectedLead.source} />
+                </div>
+              </div>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lead-assigned">Assigned To</Label>
+                  <Select defaultValue={selectedLead.assignedTo === 'Unassigned' ? 'unassigned' : 'assigned'}>
+                    <SelectTrigger id="edit-lead-assigned">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sarah">Sarah Miller</SelectItem>
+                      <SelectItem value="robert">Robert Brown</SelectItem>
+                      <SelectItem value="jessica">Jessica Lee</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lead-followup">Next Follow-up</Label>
+                  <Input 
+                    id="edit-lead-followup" 
+                    type="datetime-local" 
+                    defaultValue={selectedLead.nextFollowUp 
+                      ? new Date(selectedLead.nextFollowUp).toISOString().slice(0, 16) 
+                      : ''
+                    } 
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-lead-notes">Notes</Label>
+                <Textarea 
+                  id="edit-lead-notes" 
+                  placeholder="Add any additional information about this lead..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditLeadDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEditLead}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Schedule Follow-Up Dialog */}
+      <Dialog open={followUpDialogOpen} onOpenChange={setFollowUpDialogOpen}>
+        {selectedLead && (
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Schedule Follow-Up</DialogTitle>
+              <DialogDescription>
+                Schedule a follow-up with {selectedLead.name}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="followup-date">Follow-up Date & Time</Label>
+                <Input id="followup-date" type="datetime-local" />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="followup-type">Follow-up Type</Label>
+                <Select defaultValue="call">
+                  <SelectTrigger id="followup-type">
+                    <SelectValue placeholder="Select follow-up type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="call">Phone Call</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="meeting">Meeting</SelectItem>
+                    <SelectItem value="video">Video Call</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="followup-notes">Notes</Label>
+                <Textarea 
+                  id="followup-notes" 
+                  placeholder="Add any notes about this follow-up..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setFollowUpDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleScheduleFollowUp}>
+                Schedule Follow-up
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Send Message Dialog */}
+      <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
+        {selectedLead && (
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Send Message</DialogTitle>
+              <DialogDescription>
+                Send a message to {selectedLead.name}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="message-subject">Subject</Label>
+                <Input id="message-subject" placeholder="Enter message subject" />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="message-content">Message</Label>
+                <Textarea 
+                  id="message-content" 
+                  placeholder="Type your message here..."
+                  className="min-h-[150px]"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setMessageDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSendMessage}>
+                <Send className="mr-2 h-4 w-4" />
+                Send Message
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Add Notes Dialog */}
+      <Dialog open={notesDialogOpen} onOpenChange={setNotesDialogOpen}>
+        {selectedLead && (
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Add Notes</DialogTitle>
+              <DialogDescription>
+                Add notes for {selectedLead.name}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="note-type">Note Type</Label>
+                <Select defaultValue="general">
+                  <SelectTrigger id="note-type">
+                    <SelectValue placeholder="Select note type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General Note</SelectItem>
+                    <SelectItem value="call">Call Summary</SelectItem>
+                    <SelectItem value="meeting">Meeting Notes</SelectItem>
+                    <SelectItem value="email">Email Notes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="note-content">Notes</Label>
+                <Textarea 
+                  id="note-content" 
+                  placeholder="Type your notes here..."
+                  className="min-h-[150px]"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setNotesDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddNote}>
+                Add Note
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Move to Client Dialog */}
+      <Dialog open={moveToClientDialogOpen} onOpenChange={setMoveToClientDialogOpen}>
+        {selectedLead && (
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Convert to Client</DialogTitle>
+              <DialogDescription>
+                Convert {selectedLead.name} from a lead to a client
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="client-plan">Subscription Plan</Label>
+                <Select defaultValue="starter">
+                  <SelectTrigger id="client-plan">
+                    <SelectValue placeholder="Select plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="starter">Starter</SelectItem>
+                    <SelectItem value="professional">Professional</SelectItem>
+                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="client-join">Join Date</Label>
+                <Input id="client-join" type="date" defaultValue={new Date().toISOString().split('T')[0]} />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="client-renewal">Renewal Date</Label>
+                <Input 
+                  id="client-renewal" 
+                  type="date" 
+                  defaultValue={new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]} 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="conversion-notes">Notes</Label>
+                <Textarea 
+                  id="conversion-notes" 
+                  placeholder="Add any notes about this client conversion..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setMoveToClientDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleMoveToClient}>
+                <UserCheck className="mr-2 h-4 w-4" />
+                Convert to Client
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Delete Lead Dialog */}
+      <Dialog open={deleteLeadDialogOpen} onOpenChange={setDeleteLeadDialogOpen}>
+        {selectedLead && (
+          <DialogContent className="sm:max-w-[450px]">
+            <DialogHeader>
+              <DialogTitle>Delete Lead</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete {selectedLead.name}? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="delete-reason">Reason (Optional)</Label>
+                <Select defaultValue="">
+                  <SelectTrigger id="delete-reason">
+                    <SelectValue placeholder="Select reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No specific reason</SelectItem>
+                    <SelectItem value="duplicate">Duplicate lead</SelectItem>
+                    <SelectItem value="invalid">Invalid information</SelectItem>
+                    <SelectItem value="not-interested">Not interested</SelectItem>
+                    <SelectItem value="gone-competitor">Gone with competitor</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteLeadDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteLead}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Lead
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Edit Client Dialog */}
+      <Dialog open={editClientDialogOpen} onOpenChange={setEditClientDialogOpen}>
+        {selectedClient && (
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit Client</DialogTitle>
+              <DialogDescription>
+                Update information for {selectedClient.name}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-client-name">Client Name</Label>
+                  <Input id="edit-client-name" defaultValue={selectedClient.name} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-client-company">Company</Label>
+                  <Input id="edit-client-company" defaultValue={selectedClient.company} />
+                </div>
+              </div>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-client-email">Email</Label>
+                  <Input id="edit-client-email" type="email" defaultValue={selectedClient.email} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-client-phone">Phone</Label>
+                  <Input id="edit-client-phone" defaultValue={selectedClient.phone} />
+                </div>
+              </div>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-client-referred">Referred By</Label>
+                  <Input id="edit-client-referred" defaultValue={selectedClient.referredBy} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-client-join">Join Date</Label>
+                  <Input 
+                    id="edit-client-join" 
+                    type="date" 
+                    defaultValue={new Date(selectedClient.joinDate).toISOString().split('T')[0]} 
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-client-notes">Notes</Label>
+                <Textarea 
+                  id="edit-client-notes" 
+                  placeholder="Add any additional information about this client..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditClientDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEditClient}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Client Message Dialog */}
+      <Dialog open={clientMessageDialogOpen} onOpenChange={setClientMessageDialogOpen}>
+        {selectedClient && (
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Send Message</DialogTitle>
+              <DialogDescription>
+                Send a message to {selectedClient.name}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="client-message-subject">Subject</Label>
+                <Input id="client-message-subject" placeholder="Enter message subject" />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="client-message-content">Message</Label>
+                <Textarea 
+                  id="client-message-content" 
+                  placeholder="Type your message here..."
+                  className="min-h-[150px]"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setClientMessageDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleClientMessage}>
+                <Send className="mr-2 h-4 w-4" />
+                Send Message
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Manage Subscription Dialog */}
+      <Dialog open={manageSubscriptionDialogOpen} onOpenChange={setManageSubscriptionDialogOpen}>
+        {selectedClient && (
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Manage Subscription</DialogTitle>
+              <DialogDescription>
+                Update subscription for {selectedClient.name}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="manage-plan">Subscription Plan</Label>
+                <Select defaultValue={selectedClient.plan}>
+                  <SelectTrigger id="manage-plan">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="starter">Starter</SelectItem>
+                    <SelectItem value="professional">Professional</SelectItem>
+                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="manage-renewal">Renewal Date</Label>
+                <Input 
+                  id="manage-renewal" 
+                  type="date" 
+                  defaultValue={new Date(selectedClient.renewalDate).toISOString().split('T')[0]} 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="manage-notes">Notes</Label>
+                <Textarea 
+                  id="manage-notes" 
+                  placeholder="Add any notes about this subscription change..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setManageSubscriptionDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleManageSubscription}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      
+      {/* Delete Client Dialog */}
+      <Dialog open={deleteClientDialogOpen} onOpenChange={setDeleteClientDialogOpen}>
+        {selectedClient && (
+          <DialogContent className="sm:max-w-[450px]">
+            <DialogHeader>
+              <DialogTitle>Delete Client</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete {selectedClient.name}? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="delete-client-reason">Reason (Optional)</Label>
+                <Select defaultValue="">
+                  <SelectTrigger id="delete-client-reason">
+                    <SelectValue placeholder="Select reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No specific reason</SelectItem>
+                    <SelectItem value="duplicate">Duplicate client</SelectItem>
+                    <SelectItem value="gone-competitor">Gone with competitor</SelectItem>
+                    <SelectItem value="out-of-business">Out of business</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteClientDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteClient}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Client
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+    </div>
+  );
+};
+
+export default LeadsCRM;
