@@ -64,6 +64,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import CustomerDetailsModal from "@/components/CustomerDetailsModal";
 
 interface Lead {
   id: string;
@@ -72,9 +73,10 @@ interface Lead {
   company: string;
   email: string;
   phone: string;
+  phoneCountry?: string;
   street: string;
   address: string;
-  area: string;
+  city: string; // Changed from area to city
   district: string;
   state: string;
   country: string;
@@ -96,9 +98,10 @@ interface Client {
   company: string;
   email: string;
   phone: string;
+  phoneCountry?: string;
   street: string;
   address: string;
-  area: string;
+  city: string; // Changed from area to city
   district: string;
   state: string;
   country: string;
@@ -119,9 +122,10 @@ const leads: Lead[] = [
     company: 'Acme Corp',
     email: 'michael@acmecorp.com',
     phone: '5551234567',
+    phoneCountry: '1',
     street: '123 Main St',
     address: 'Suite 400',
-    area: 'Downtown',
+    city: 'Downtown',
     district: 'Central',
     state: 'California',
     country: 'USA',
@@ -141,10 +145,11 @@ const leads: Lead[] = [
     name: 'Jennifer Lee',
     company: 'Tech Solutions Inc',
     email: 'jennifer@techsolutions.com',
-    phone: '5559876543',
+    phone: '9876543',
+    phoneCountry: '1',
     street: '456 Tech Ave',
     address: 'Floor 3',
-    area: 'Tech District',
+    city: 'Tech District',
     district: 'North',
     state: 'Washington',
     country: 'USA',
@@ -164,10 +169,11 @@ const leads: Lead[] = [
     name: 'David Wilson',
     company: 'Global Enterprises',
     email: 'david@globalenterprises.com',
-    phone: '5552223344',
+    phone: '2223344',
+    phoneCountry: '1',
     street: '789 Business Rd',
     address: 'Level 22',
-    area: 'Uptown',
+    city: 'Uptown',
     district: 'East',
     state: 'Texas',
     country: 'USA',
@@ -187,10 +193,11 @@ const leads: Lead[] = [
     name: 'Linda Davis',
     company: 'Sunrise Technologies',
     email: 'linda@sunrisetech.com',
-    phone: '5554445566',
+    phone: '4445566',
+    phoneCountry: '1',
     street: '321 Innovation Ln',
     address: 'Suite 1000',
-    area: 'Tech Park',
+    city: 'Tech Park',
     district: 'South',
     state: 'Arizona',
     country: 'USA',
@@ -210,10 +217,11 @@ const leads: Lead[] = [
     name: 'Robert White',
     company: 'Pioneer Group',
     email: 'robert@pioneergp.com',
-    phone: '5556667788',
+    phone: '6667788',
+    phoneCountry: '1',
     street: '987 Market St',
     address: 'Unit 50',
-    area: 'Financial District',
+    city: 'Financial District',
     district: 'West',
     state: 'Illinois',
     country: 'USA',
@@ -236,10 +244,11 @@ const clients: Client[] = [
     name: 'Acme Corporation',
     company: 'Acme Corp',
     email: 'contact@acmecorp.com',
-    phone: '5551112233',
+    phone: '1112233',
+    phoneCountry: '1',
     street: '789 Corporate Blvd',
     address: 'Floor 15',
-    area: 'Business District',
+    city: 'Business District',
     district: 'Downtown',
     state: 'New York',
     country: 'USA',
@@ -257,10 +266,11 @@ const clients: Client[] = [
     name: 'Beta Industries',
     company: 'Beta Inc',
     email: 'info@betainc.com',
-    phone: '5553334455',
+    phone: '3334455',
+    phoneCountry: '1',
     street: '456 Industrial Ave',
     address: 'Building A',
-    area: 'Industrial Zone',
+    city: 'Industrial Zone',
     district: 'East Side',
     state: 'New Jersey',
     country: 'USA',
@@ -278,10 +288,11 @@ const clients: Client[] = [
     name: 'Gamma Solutions',
     company: 'Gamma Ltd',
     email: 'sales@gammaltd.com',
-    phone: '5555556677',
+    phone: '5556677',
+    phoneCountry: '1',
     street: '123 Tech Rd',
     address: 'Suite 200',
-    area: 'Technology Park',
+    city: 'Technology Park',
     district: 'Silicon Valley',
     state: 'California',
     country: 'USA',
@@ -299,10 +310,11 @@ const clients: Client[] = [
     name: 'Delta Group',
     company: 'Delta Corp',
     email: 'support@deltacorp.com',
-    phone: '5557778899',
+    phone: '7778899',
+    phoneCountry: '1',
     street: '987 Commerce St',
     address: 'Level 10',
-    area: 'Commercial Area',
+    city: 'Commercial Area',
     district: 'Uptown',
     state: 'Florida',
     country: 'USA',
@@ -320,10 +332,11 @@ const clients: Client[] = [
     name: 'Epsilon Systems',
     company: 'Epsilon Inc',
     email: 'admin@epsiloninc.com',
-    phone: '5559990011',
+    phone: '9990011',
+    phoneCountry: '1',
     street: '654 Innovation Blvd',
     address: 'Floor 5',
-    area: 'Research Park',
+    city: 'Research Park',
     district: 'North County',
     state: 'North Carolina',
     country: 'USA',
@@ -350,6 +363,9 @@ const LeadsCRM = () => {
   const [editClientDialogOpen, setEditClientDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [viewingCustomerType, setViewingCustomerType] = useState<'lead' | 'client'>('lead');
+  const [viewingCustomer, setViewingCustomer] = useState<Lead | Client | null>(null);
 
   const handleAddLead = () => {
     toast({
@@ -383,6 +399,7 @@ const LeadsCRM = () => {
       title: "Lead Deleted",
       description: "Lead has been deleted successfully.",
     });
+    setDetailsDialogOpen(false);
   };
 
   const handleDeleteClient = (clientId: string) => {
@@ -391,6 +408,25 @@ const LeadsCRM = () => {
       title: "Client Deleted",
       description: "Client has been deleted successfully.",
     });
+    setDetailsDialogOpen(false);
+  };
+
+  const handleViewDetails = (type: 'lead' | 'client', id: string) => {
+    if (type === 'lead') {
+      const lead = leadsData.find(l => l.id === id);
+      if (lead) {
+        setViewingCustomer(lead);
+        setViewingCustomerType('lead');
+        setDetailsDialogOpen(true);
+      }
+    } else {
+      const client = clientsData.find(c => c.id === id);
+      if (client) {
+        setViewingCustomer(client);
+        setViewingCustomerType('client');
+        setDetailsDialogOpen(true);
+      }
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -535,31 +571,38 @@ const LeadsCRM = () => {
                 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="lead-phone">Phone</Label>
-                    <Input id="lead-phone" placeholder="e.g., 5551234567 (no country code)" />
+                    <Label htmlFor="lead-phone-country">Country Code</Label>
+                    <Input id="lead-phone-country" placeholder="e.g., 1 (for US)" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lead-street">Street</Label>
-                    <Input id="lead-street" placeholder="e.g., 123 Main St" />
+                    <Label htmlFor="lead-phone">Phone Number</Label>
+                    <Input id="lead-phone" placeholder="e.g., 5551234567 (no country code)" />
                   </div>
                 </div>
                 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
+                    <Label htmlFor="lead-street">Street</Label>
+                    <Input id="lead-street" placeholder="e.g., 123 Main St" />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="lead-address">Address</Label>
                     <Input id="lead-address" placeholder="e.g., Suite 400" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lead-area">Area</Label>
-                    <Input id="lead-area" placeholder="e.g., Downtown" />
-                  </div>
                 </div>
                 
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="lead-city">City</Label>
+                    <Input id="lead-city" placeholder="e.g., New York" />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="lead-district">District</Label>
                     <Input id="lead-district" placeholder="e.g., Central" />
                   </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="lead-state">State</Label>
                     <Input id="lead-state" placeholder="e.g., California" />
@@ -568,13 +611,13 @@ const LeadsCRM = () => {
                     <Label htmlFor="lead-country">Country</Label>
                     <Input id="lead-country" placeholder="e.g., USA" />
                   </div>
-                </div>
-                
-                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="lead-postal">Postal Code</Label>
                     <Input id="lead-postal" placeholder="e.g., 90001" />
                   </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="lead-status">Status</Label>
                     <Select defaultValue="new">
@@ -606,9 +649,6 @@ const LeadsCRM = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                
-                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="lead-assigned">Assign To</Label>
                     <Select defaultValue="sarah">
@@ -623,10 +663,11 @@ const LeadsCRM = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lead-followup">Next Follow-up</Label>
-                    <Input id="lead-followup" type="datetime-local" />
-                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="lead-followup">Next Follow-up</Label>
+                  <Input id="lead-followup" type="datetime-local" />
                 </div>
                 
                 <div className="space-y-2">
@@ -717,31 +758,38 @@ const LeadsCRM = () => {
                 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="client-phone">Phone</Label>
-                    <Input id="client-phone" placeholder="e.g., 5551234567 (no country code)" />
+                    <Label htmlFor="client-phone-country">Country Code</Label>
+                    <Input id="client-phone-country" placeholder="e.g., 1 (for US)" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="client-street">Street</Label>
-                    <Input id="client-street" placeholder="e.g., 123 Main St" />
+                    <Label htmlFor="client-phone">Phone Number</Label>
+                    <Input id="client-phone" placeholder="e.g., 5551234567 (no country code)" />
                   </div>
                 </div>
                 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
+                    <Label htmlFor="client-street">Street</Label>
+                    <Input id="client-street" placeholder="e.g., 123 Main St" />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="client-address">Address</Label>
                     <Input id="client-address" placeholder="e.g., Suite 400" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="client-area">Area</Label>
-                    <Input id="client-area" placeholder="e.g., Downtown" />
-                  </div>
                 </div>
                 
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="client-city">City</Label>
+                    <Input id="client-city" placeholder="e.g., New York" />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="client-district">District</Label>
                     <Input id="client-district" placeholder="e.g., Central" />
                   </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="client-state">State</Label>
                     <Input id="client-state" placeholder="e.g., California" />
@@ -750,13 +798,13 @@ const LeadsCRM = () => {
                     <Label htmlFor="client-country">Country</Label>
                     <Input id="client-country" placeholder="e.g., USA" />
                   </div>
-                </div>
-                
-                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="client-postal">Postal Code</Label>
                     <Input id="client-postal" placeholder="e.g., 90001" />
                   </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="client-plan">Subscription Plan</Label>
                     <Select defaultValue="starter">
@@ -840,18 +888,11 @@ const LeadsCRM = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Users className="h-4 w-4" />
-                  </TableHead>
                   <TableHead>Customer ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Last Contact</TableHead>
+                  <TableHead>Phone Number</TableHead>
                   <TableHead>Next Follow-up</TableHead>
                   <TableHead>Assigned To</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -860,15 +901,14 @@ const LeadsCRM = () => {
               <TableBody>
                 {leadsData.map((lead) => (
                   <TableRow key={lead.id}>
-                    <TableCell className="font-medium">
-                      <Avatar>
-                        <AvatarImage src={lead.avatar || ""} alt={lead.name} />
-                        <AvatarFallback>
-                          <Users className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
+                    <TableCell>
+                      <button
+                        className="text-blue-500 hover:underline font-medium"
+                        onClick={() => handleViewDetails('lead', lead.id)}
+                      >
+                        {lead.customerId}
+                      </button>
                     </TableCell>
-                    <TableCell>{lead.customerId}</TableCell>
                     <TableCell>{lead.name}</TableCell>
                     <TableCell>{lead.company}</TableCell>
                     <TableCell>
@@ -879,12 +919,12 @@ const LeadsCRM = () => {
                         {lead.email}
                       </a>
                     </TableCell>
-                    <TableCell>{lead.phone}</TableCell>
-                    <TableCell>{getStatusBadge(lead.status)}</TableCell>
-                    <TableCell>{lead.source}</TableCell>
-                    <TableCell>{new Date(lead.created).toLocaleDateString()}</TableCell>
-                    <TableCell>{lead.lastContact ? new Date(lead.lastContact).toLocaleDateString() : 'N/A'}</TableCell>
-                    <TableCell>{lead.nextFollowUp ? new Date(lead.nextFollowUp).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>
+                      {lead.phoneCountry && `+${lead.phoneCountry} `}{lead.phone}
+                    </TableCell>
+                    <TableCell>
+                      {lead.nextFollowUp ? new Date(lead.nextFollowUp).toLocaleDateString() : 'N/A'}
+                    </TableCell>
                     <TableCell>{lead.assignedTo}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end">
@@ -936,17 +976,12 @@ const LeadsCRM = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Users className="h-4 w-4" />
-                  </TableHead>
                   <TableHead>Customer ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Plan</TableHead>
+                  <TableHead>Phone Number</TableHead>
                   <TableHead>Referred By</TableHead>
-                  <TableHead>Join Date</TableHead>
                   <TableHead>Renewal Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -954,15 +989,14 @@ const LeadsCRM = () => {
               <TableBody>
                 {clientsData.map((client) => (
                   <TableRow key={client.id}>
-                    <TableCell className="font-medium">
-                      <Avatar>
-                        <AvatarImage src={client.avatar || ""} alt={client.name} />
-                        <AvatarFallback>
-                          <Users className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
+                    <TableCell>
+                      <button
+                        className="text-blue-500 hover:underline font-medium"
+                        onClick={() => handleViewDetails('client', client.id)}
+                      >
+                        {client.customerId}
+                      </button>
                     </TableCell>
-                    <TableCell>{client.customerId}</TableCell>
                     <TableCell>{client.name}</TableCell>
                     <TableCell>{client.company}</TableCell>
                     <TableCell>
@@ -973,11 +1007,13 @@ const LeadsCRM = () => {
                         {client.email}
                       </a>
                     </TableCell>
-                    <TableCell>{client.phone}</TableCell>
-                    <TableCell>{getPlanBadge(client.plan)}</TableCell>
+                    <TableCell>
+                      {client.phoneCountry && `+${client.phoneCountry} `}{client.phone}
+                    </TableCell>
                     <TableCell>{client.referredBy}</TableCell>
-                    <TableCell>{new Date(client.joinDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(client.renewalDate).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {client.renewalDate ? new Date(client.renewalDate).toLocaleDateString() : 'N/A'}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end">
                         <Button
@@ -1004,6 +1040,29 @@ const LeadsCRM = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Customer Details Modal */}
+      <CustomerDetailsModal
+        isOpen={detailsDialogOpen}
+        onClose={() => setDetailsDialogOpen(false)}
+        customerType={viewingCustomerType}
+        customerData={viewingCustomer}
+        onEdit={() => {
+          setDetailsDialogOpen(false);
+          if (viewingCustomerType === 'lead' && viewingCustomer) {
+            handleEditLead(viewingCustomer as Lead);
+          } else if (viewingCustomerType === 'client' && viewingCustomer) {
+            handleEditClient(viewingCustomer as Client);
+          }
+        }}
+        onDelete={() => {
+          if (viewingCustomerType === 'lead' && viewingCustomer) {
+            handleDeleteLead((viewingCustomer as Lead).id);
+          } else if (viewingCustomerType === 'client' && viewingCustomer) {
+            handleDeleteClient((viewingCustomer as Client).id);
+          }
+        }}
+      />
     </div>
   );
 };
