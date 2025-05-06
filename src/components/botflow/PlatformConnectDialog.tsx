@@ -27,6 +27,9 @@ interface PlatformConnectDialogProps {
   onSuccess: () => void;
 }
 
+// Define QR code status type to ensure consistent usage
+type QrCodeStatus = 'generating' | 'ready' | 'scanning' | 'success' | 'expired';
+
 const PlatformConnectDialog: React.FC<PlatformConnectDialogProps> = ({
   open,
   onOpenChange,
@@ -43,7 +46,7 @@ const PlatformConnectDialog: React.FC<PlatformConnectDialogProps> = ({
     platformType === 'whatsapp' ? 'qrcode' : 'apikey'
   );
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
-  const [qrCodeStatus, setQrCodeStatus] = useState<'generating' | 'ready' | 'scanning' | 'success' | 'expired'>('generating');
+  const [qrCodeStatus, setQrCodeStatus] = useState<QrCodeStatus>('generating');
   const [qrCodeTimer, setQrCodeTimer] = useState<number>(60);
   const { toast } = useToast();
 
