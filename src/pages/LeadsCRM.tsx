@@ -402,9 +402,9 @@ const LeadsCRM = () => {
       case 'qualified':
         return <Badge>Qualified</Badge>;
       case 'proposal':
-        return <Badge variant="ghost">Proposal</Badge>;
+        return <Badge variant="secondary">Proposal</Badge>;
       case 'converted':
-        return <Badge variant="success">Converted</Badge>;
+        return <Badge variant="outline">Converted</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -417,7 +417,7 @@ const LeadsCRM = () => {
       case 'professional':
         return <Badge>Professional</Badge>;
       case 'enterprise':
-        return <Badge variant="success">Enterprise</Badge>;
+        return <Badge variant="outline">Enterprise</Badge>;
       default:
         return <Badge>{plan}</Badge>;
     }
