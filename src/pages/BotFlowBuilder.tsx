@@ -53,6 +53,7 @@ import { NodePalette } from '@/components/botflow/NodePalette';
 import { KeywordManager } from '@/components/botflow/KeywordManager';
 import { SavedFlowsList } from '@/components/botflow/SavedFlowsList';
 import { PlanDetailsModal } from '@/components/botflow/PlanDetailsModal';
+import PlatformConnectDialog from '@/components/botflow/PlatformConnectDialog';
 
 // Node types registry
 const nodeTypes = {
@@ -144,6 +145,35 @@ const BotFlowBuilder = () => {
     telegram: 5,
     website: 5
   });
+  
+  // State for platform connection dialog
+  const [connectDialogOpen, setConnectDialogOpen] = useState(false);
+  const [connectingPlatform, setConnectingPlatform] = useState<'whatsapp' | 'facebook' | 'instagram' | 'telegram' | 'website'>('whatsapp');
+  const [connectingAccountIndex, setConnectingAccountIndex] = useState(0);
+  const [connectedAccounts, setConnectedAccounts] = useState<{
+    [key: string]: boolean;
+  }>({});
+
+  // Open connection dialog for a specific platform
+  const openConnectDialog = (platform: 'whatsapp' | 'facebook' | 'instagram' | 'telegram' | 'website', index: number) => {
+    setConnectingPlatform(platform);
+    setConnectingAccountIndex(index);
+    setConnectDialogOpen(true);
+  };
+
+  // Handle successful connection
+  const handleConnectionSuccess = () => {
+    // Mark this account as connected
+    setConnectedAccounts(prev => ({
+      ...prev,
+      [`${connectingPlatform}-${connectingAccountIndex}`]: true
+    }));
+  };
+
+  // Check if a specific account is connected
+  const isAccountConnected = (platform: string, index: number) => {
+    return connectedAccounts[`${platform}-${index}`] || false;
+  };
 
   // Check for authentication
   useEffect(() => {
@@ -859,14 +889,25 @@ const BotFlowBuilder = () => {
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {Array.from({ length: Math.min(platformLimits.whatsapp, 8) }, (_, i) => (
-                      <Button 
-                        key={`whatsapp-${i}`}
-                        variant={selectedPlatforms.includes(`whatsapp-${i}`) ? "default" : "outline"}
-                        className={selectedPlatforms.includes(`whatsapp-${i}`) ? "bg-green-600 hover:bg-green-700" : ""}
-                        onClick={() => handlePlatformChange(`whatsapp-${i}`)}
-                      >
-                        WhatsApp {i + 1}
-                      </Button>
+                      <div key={`whatsapp-${i}`} className="flex flex-col gap-2 items-center">
+                        <Button 
+                          variant={selectedPlatforms.includes(`whatsapp-${i}`) ? "default" : "outline"}
+                          className={selectedPlatforms.includes(`whatsapp-${i}`) ? "bg-green-600 hover:bg-green-700" : ""}
+                          onClick={() => handlePlatformChange(`whatsapp-${i}`)}
+                        >
+                          WhatsApp {i + 1}
+                        </Button>
+                        {selectedPlatforms.includes(`whatsapp-${i}`) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs px-2 py-0 h-7"
+                            onClick={() => openConnectDialog('whatsapp', i)}
+                          >
+                            {isAccountConnected('whatsapp', i) ? 'Reconfigure' : 'Configure connection'}
+                          </Button>
+                        )}
+                      </div>
                     ))}
                     {currentPlan !== "Enterprise" && (
                       <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
@@ -884,14 +925,25 @@ const BotFlowBuilder = () => {
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {Array.from({ length: Math.min(platformLimits.facebook, 8) }, (_, i) => (
-                      <Button 
-                        key={`facebook-${i}`}
-                        variant={selectedPlatforms.includes(`facebook-${i}`) ? "default" : "outline"}
-                        className={selectedPlatforms.includes(`facebook-${i}`) ? "bg-blue-600 hover:bg-blue-700" : ""}
-                        onClick={() => handlePlatformChange(`facebook-${i}`)}
-                      >
-                        Facebook {i + 1}
-                      </Button>
+                      <div key={`facebook-${i}`} className="flex flex-col gap-2 items-center">
+                        <Button 
+                          variant={selectedPlatforms.includes(`facebook-${i}`) ? "default" : "outline"}
+                          className={selectedPlatforms.includes(`facebook-${i}`) ? "bg-blue-600 hover:bg-blue-700" : ""}
+                          onClick={() => handlePlatformChange(`facebook-${i}`)}
+                        >
+                          Facebook {i + 1}
+                        </Button>
+                        {selectedPlatforms.includes(`facebook-${i}`) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs px-2 py-0 h-7"
+                            onClick={() => openConnectDialog('facebook', i)}
+                          >
+                            {isAccountConnected('facebook', i) ? 'Reconfigure' : 'Configure connection'}
+                          </Button>
+                        )}
+                      </div>
                     ))}
                     {currentPlan !== "Enterprise" && (
                       <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
@@ -909,14 +961,25 @@ const BotFlowBuilder = () => {
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {Array.from({ length: Math.min(platformLimits.instagram, 8) }, (_, i) => (
-                      <Button 
-                        key={`instagram-${i}`}
-                        variant={selectedPlatforms.includes(`instagram-${i}`) ? "default" : "outline"}
-                        className={selectedPlatforms.includes(`instagram-${i}`) ? "bg-purple-600 hover:bg-purple-700" : ""}
-                        onClick={() => handlePlatformChange(`instagram-${i}`)}
-                      >
-                        Instagram {i + 1}
-                      </Button>
+                      <div key={`instagram-${i}`} className="flex flex-col gap-2 items-center">
+                        <Button 
+                          variant={selectedPlatforms.includes(`instagram-${i}`) ? "default" : "outline"}
+                          className={selectedPlatforms.includes(`instagram-${i}`) ? "bg-purple-600 hover:bg-purple-700" : ""}
+                          onClick={() => handlePlatformChange(`instagram-${i}`)}
+                        >
+                          Instagram {i + 1}
+                        </Button>
+                        {selectedPlatforms.includes(`instagram-${i}`) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs px-2 py-0 h-7"
+                            onClick={() => openConnectDialog('instagram', i)}
+                          >
+                            {isAccountConnected('instagram', i) ? 'Reconfigure' : 'Configure connection'}
+                          </Button>
+                        )}
+                      </div>
                     ))}
                     {currentPlan !== "Enterprise" && (
                       <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
@@ -935,14 +998,26 @@ const BotFlowBuilder = () => {
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {Array.from({ length: Math.min(platformLimits.telegram, 8) }, (_, i) => (
-                      <Button 
-                        key={`telegram-${i}`}
-                        variant={selectedPlatforms.includes(`telegram-${i}`) ? "default" : "outline"}
-                        className={selectedPlatforms.includes(`telegram-${i}`) ? "bg-blue-500 hover:bg-blue-600" : ""}
-                        onClick={() => handlePlatformChange(`telegram-${i}`)}
-                      >
-                        Telegram {i + 1}
-                      </Button>
+                      <div key={`telegram-${i}`} className="flex flex-col gap-2 items-center">
+                        <Button 
+                          key={`telegram-${i}`}
+                          variant={selectedPlatforms.includes(`telegram-${i}`) ? "default" : "outline"}
+                          className={selectedPlatforms.includes(`telegram-${i}`) ? "bg-blue-500 hover:bg-blue-600" : ""}
+                          onClick={() => handlePlatformChange(`telegram-${i}`)}
+                        >
+                          Telegram {i + 1}
+                        </Button>
+                        {selectedPlatforms.includes(`telegram-${i}`) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs px-2 py-0 h-7"
+                            onClick={() => openConnectDialog('telegram', i)}
+                          >
+                            {isAccountConnected('telegram', i) ? 'Reconfigure' : 'Configure connection'}
+                          </Button>
+                        )}
+                      </div>
                     ))}
                     {currentPlan !== "Enterprise" && (
                       <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
@@ -961,14 +1036,25 @@ const BotFlowBuilder = () => {
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {Array.from({ length: Math.min(platformLimits.website, 8) }, (_, i) => (
-                      <Button 
-                        key={`website-${i}`}
-                        variant={selectedPlatforms.includes(`website-${i}`) ? "default" : "outline"}
-                        className={selectedPlatforms.includes(`website-${i}`) ? "bg-green-600 hover:bg-green-700" : ""}
-                        onClick={() => handlePlatformChange(`website-${i}`)}
-                      >
-                        Widget {i + 1}
-                      </Button>
+                      <div key={`website-${i}`} className="flex flex-col gap-2 items-center">
+                        <Button 
+                          variant={selectedPlatforms.includes(`website-${i}`) ? "default" : "outline"}
+                          className={selectedPlatforms.includes(`website-${i}`) ? "bg-green-600 hover:bg-green-700" : ""}
+                          onClick={() => handlePlatformChange(`website-${i}`)}
+                        >
+                          Widget {i + 1}
+                        </Button>
+                        {selectedPlatforms.includes(`website-${i}`) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs px-2 py-0 h-7"
+                            onClick={() => openConnectDialog('website', i)}
+                          >
+                            {isAccountConnected('website', i) ? 'Reconfigure' : 'Configure connection'}
+                          </Button>
+                        )}
+                      </div>
                     ))}
                     {currentPlan !== "Enterprise" && (
                       <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
@@ -1144,6 +1230,15 @@ const BotFlowBuilder = () => {
         isOpen={planDetailsOpen}
         onClose={() => setPlanDetailsOpen(false)}
         currentPlan={currentPlan}
+      />
+
+      {/* Platform Connect Dialog */}
+      <PlatformConnectDialog
+        open={connectDialogOpen}
+        onOpenChange={setConnectDialogOpen}
+        platformType={connectingPlatform}
+        accountIndex={connectingAccountIndex}
+        onSuccess={handleConnectionSuccess}
       />
     </div>
   );
