@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -24,7 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -42,7 +40,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Plus,
   Users,
   UserPlus,
   Building,
@@ -55,147 +52,287 @@ import {
   MessageSquare,
   Send,
   UserCheck,
-  BarChart3,
   Upload,
   Edit,
   Trash2,
-  ClipboardList,
   Clock,
-  CalendarCheck,
   Briefcase,
+  Image,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface Lead {
   id: string;
+  customerId: string;
   name: string;
   company: string;
   email: string;
   phone: string;
+  street: string;
+  address: string;
+  area: string;
+  district: string;
+  state: string;
+  country: string;
+  postalCode: string;
   status: 'new' | 'contacted' | 'qualified' | 'proposal' | 'converted';
   source: string;
   created: string;
   lastContact: string;
   nextFollowUp: string;
   assignedTo: string;
+  notes: string;
+  avatar?: string;
 }
 
 interface Client {
   id: string;
+  customerId: string;
   name: string;
   company: string;
   email: string;
   phone: string;
+  street: string;
+  address: string;
+  area: string;
+  district: string;
+  state: string;
+  country: string;
+  postalCode: string;
   plan: 'starter' | 'professional' | 'enterprise';
   referredBy: string;
   joinDate: string;
   renewalDate: string;
+  notes: string;
+  avatar?: string;
 }
 
 const leads: Lead[] = [
   {
     id: '1',
+    customerId: 'LEAD001',
     name: 'Michael Johnson',
     company: 'Acme Corp',
     email: 'michael@acmecorp.com',
-    phone: '+1 (555) 123-4567',
+    phone: '5551234567',
+    street: '123 Main St',
+    address: 'Suite 400',
+    area: 'Downtown',
+    district: 'Central',
+    state: 'California',
+    country: 'USA',
+    postalCode: '90001',
     status: 'qualified',
     source: 'Website',
     created: '2023-06-10T14:30:00Z',
     lastContact: '2023-06-15T09:45:00Z',
     nextFollowUp: '2023-06-22T10:00:00Z',
     assignedTo: 'Sarah Miller',
+    notes: 'Interested in our enterprise solution',
+    avatar: '',
   },
   {
     id: '2',
+    customerId: 'LEAD002',
     name: 'Jennifer Lee',
     company: 'Tech Solutions Inc',
     email: 'jennifer@techsolutions.com',
-    phone: '+1 (555) 987-6543',
+    phone: '5559876543',
+    street: '456 Tech Ave',
+    address: 'Floor 3',
+    area: 'Tech District',
+    district: 'North',
+    state: 'Washington',
+    country: 'USA',
+    postalCode: '98001',
     status: 'contacted',
     source: 'LinkedIn',
     created: '2023-06-12T11:20:00Z',
     lastContact: '2023-06-14T15:30:00Z',
     nextFollowUp: '2023-06-21T14:00:00Z',
     assignedTo: 'Robert Brown',
+    notes: 'Requested pricing information',
+    avatar: '',
   },
   {
     id: '3',
+    customerId: 'LEAD003',
     name: 'David Wilson',
-    company: 'Global Industries',
-    email: 'david@globalind.com',
-    phone: '+1 (555) 456-7890',
+    company: 'Global Enterprises',
+    email: 'david@globalenterprises.com',
+    phone: '5552223344',
+    street: '789 Business Rd',
+    address: 'Level 22',
+    area: 'Uptown',
+    district: 'East',
+    state: 'Texas',
+    country: 'USA',
+    postalCode: '75001',
     status: 'new',
     source: 'Referral',
-    created: '2023-06-16T09:00:00Z',
-    lastContact: '',
-    nextFollowUp: '2023-06-20T11:30:00Z',
-    assignedTo: 'Unassigned',
+    created: '2023-06-15T08:00:00Z',
+    lastContact: '2023-06-15T08:00:00Z',
+    nextFollowUp: '2023-06-23T11:00:00Z',
+    assignedTo: 'Jessica Lee',
+    notes: 'Potential for a large deal',
+    avatar: '',
   },
   {
     id: '4',
-    name: 'Emily Parker',
-    company: 'Parker Designs',
-    email: 'emily@parkerdesigns.com',
-    phone: '+1 (555) 789-0123',
+    customerId: 'LEAD004',
+    name: 'Linda Davis',
+    company: 'Sunrise Technologies',
+    email: 'linda@sunrisetech.com',
+    phone: '5554445566',
+    street: '321 Innovation Ln',
+    address: 'Suite 1000',
+    area: 'Tech Park',
+    district: 'South',
+    state: 'Arizona',
+    country: 'USA',
+    postalCode: '85001',
     status: 'proposal',
-    source: 'Trade Show',
-    created: '2023-06-05T16:45:00Z',
-    lastContact: '2023-06-18T13:15:00Z',
-    nextFollowUp: '2023-06-24T15:30:00Z',
+    source: 'Google Ads',
+    created: '2023-06-18T16:45:00Z',
+    lastContact: '2023-06-20T13:20:00Z',
+    nextFollowUp: '2023-06-25T16:00:00Z',
     assignedTo: 'Sarah Miller',
+    notes: 'Reviewing our proposal',
+    avatar: '',
   },
   {
     id: '5',
-    name: 'Robert Chen',
-    company: 'Innovate Solutions',
-    email: 'robert@innovatesol.com',
-    phone: '+1 (555) 234-5678',
+    customerId: 'LEAD005',
+    name: 'Robert White',
+    company: 'Pioneer Group',
+    email: 'robert@pioneergp.com',
+    phone: '5556667788',
+    street: '987 Market St',
+    address: 'Unit 50',
+    area: 'Financial District',
+    district: 'West',
+    state: 'Illinois',
+    country: 'USA',
+    postalCode: '60601',
     status: 'converted',
-    source: 'Google Ads',
-    created: '2023-05-28T10:30:00Z',
-    lastContact: '2023-06-17T11:45:00Z',
-    nextFollowUp: '',
+    source: 'Email Campaign',
+    created: '2023-06-20T10:30:00Z',
+    lastContact: '2023-06-22T11:15:00Z',
+    nextFollowUp: '2023-06-29T10:00:00Z',
     assignedTo: 'Robert Brown',
+    notes: 'Signed a three-year contract',
+    avatar: '',
   },
 ];
 
 const clients: Client[] = [
   {
     id: '1',
+    customerId: 'CLIENT001',
     name: 'Acme Corporation',
     company: 'Acme Corp',
     email: 'contact@acmecorp.com',
-    phone: '+1 (555) 111-2233',
+    phone: '5551112233',
+    street: '789 Corporate Blvd',
+    address: 'Floor 15',
+    area: 'Business District',
+    district: 'Downtown',
+    state: 'New York',
+    country: 'USA',
+    postalCode: '10001',
     plan: 'professional',
     referredBy: 'Trade Show',
     joinDate: '2023-01-15T00:00:00Z',
     renewalDate: '2024-01-15T00:00:00Z',
+    notes: 'Key account, requires quarterly check-ins',
+    avatar: '',
   },
   {
     id: '2',
-    name: 'Global Enterprises',
-    company: 'Global Ent',
-    email: 'info@globalent.com',
-    phone: '+1 (555) 444-5555',
+    customerId: 'CLIENT002',
+    name: 'Beta Industries',
+    company: 'Beta Inc',
+    email: 'info@betainc.com',
+    phone: '5553334455',
+    street: '456 Industrial Ave',
+    address: 'Building A',
+    area: 'Industrial Zone',
+    district: 'East Side',
+    state: 'New Jersey',
+    country: 'USA',
+    postalCode: '07001',
     plan: 'enterprise',
-    referredBy: 'Website',
-    joinDate: '2023-03-10T00:00:00Z',
-    renewalDate: '2024-03-10T00:00:00Z',
+    referredBy: 'Existing Client',
+    joinDate: '2022-11-01T00:00:00Z',
+    renewalDate: '2023-11-01T00:00:00Z',
+    notes: 'High-value client, needs custom solutions',
+    avatar: '',
   },
   {
     id: '3',
-    name: 'Tech Innovations',
-    company: 'Tech Innovations Ltd',
-    email: 'contact@techinnovations.com',
-    phone: '+1 (555) 777-8888',
+    customerId: 'CLIENT003',
+    name: 'Gamma Solutions',
+    company: 'Gamma Ltd',
+    email: 'sales@gammaltd.com',
+    phone: '5555556677',
+    street: '123 Tech Rd',
+    address: 'Suite 200',
+    area: 'Technology Park',
+    district: 'Silicon Valley',
+    state: 'California',
+    country: 'USA',
+    postalCode: '94043',
     plan: 'starter',
-    referredBy: 'Robert Chen',
-    joinDate: '2023-05-20T00:00:00Z',
-    renewalDate: '2024-05-20T00:00:00Z',
+    referredBy: 'Online Advertising',
+    joinDate: '2023-03-10T00:00:00Z',
+    renewalDate: '2024-03-10T00:00:00Z',
+    notes: 'New client, exploring basic features',
+    avatar: '',
+  },
+  {
+    id: '4',
+    customerId: 'CLIENT004',
+    name: 'Delta Group',
+    company: 'Delta Corp',
+    email: 'support@deltacorp.com',
+    phone: '5557778899',
+    street: '987 Commerce St',
+    address: 'Level 10',
+    area: 'Commercial Area',
+    district: 'Uptown',
+    state: 'Florida',
+    country: 'USA',
+    postalCode: '33101',
+    plan: 'professional',
+    referredBy: 'Direct Mail',
+    joinDate: '2022-09-20T00:00:00Z',
+    renewalDate: '2023-09-20T00:00:00Z',
+    notes: 'Established client, requires regular updates',
+    avatar: '',
+  },
+  {
+    id: '5',
+    customerId: 'CLIENT005',
+    name: 'Epsilon Systems',
+    company: 'Epsilon Inc',
+    email: 'admin@epsiloninc.com',
+    phone: '5559990011',
+    street: '654 Innovation Blvd',
+    address: 'Floor 5',
+    area: 'Research Park',
+    district: 'North County',
+    state: 'North Carolina',
+    country: 'USA',
+    postalCode: '27701',
+    plan: 'enterprise',
+    referredBy: 'Conference',
+    joinDate: '2023-05-01T00:00:00Z',
+    renewalDate: '2024-05-01T00:00:00Z',
+    notes: 'Strategic client, needs advanced support',
+    avatar: '',
   },
 ];
 
@@ -204,168 +341,117 @@ const LeadsCRM = () => {
   const [activeTab, setActiveTab] = useState('leads');
   const [newLeadDialogOpen, setNewLeadDialogOpen] = useState(false);
   const [newClientDialogOpen, setNewClientDialogOpen] = useState(false);
-  
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [leadDetailsOpen, setLeadDetailsOpen] = useState(false);
+  const leadAvatarRef = useRef<HTMLInputElement>(null);
+  const clientAvatarRef = useRef<HTMLInputElement>(null);
+  const [leadsData, setLeadsData] = useState(leads);
+  const [clientsData, setClientsData] = useState(clients);
   const [editLeadDialogOpen, setEditLeadDialogOpen] = useState(false);
-  const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
-  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
-  const [notesDialogOpen, setNotesDialogOpen] = useState(false);
-  const [moveToClientDialogOpen, setMoveToClientDialogOpen] = useState(false);
-  const [deleteLeadDialogOpen, setDeleteLeadDialogOpen] = useState(false);
-  
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [clientDetailsOpen, setClientDetailsOpen] = useState(false);
   const [editClientDialogOpen, setEditClientDialogOpen] = useState(false);
-  const [clientMessageDialogOpen, setClientMessageDialogOpen] = useState(false);
-  const [manageSubscriptionDialogOpen, setManageSubscriptionDialogOpen] = useState(false);
-  const [deleteClientDialogOpen, setDeleteClientDialogOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const handleAddLead = () => {
     toast({
-      title: "New lead added",
-      description: "Lead has been successfully added to your CRM",
+      title: "Lead Added",
+      description: "New lead has been added successfully.",
     });
     setNewLeadDialogOpen(false);
   };
 
   const handleAddClient = () => {
     toast({
-      title: "New client added",
-      description: "Client has been successfully added to your CRM",
+      title: "Client Added",
+      description: "New client has been added successfully.",
     });
     setNewClientDialogOpen(false);
   };
 
-  const viewLeadDetails = (lead: Lead) => {
+  const handleEditLead = (lead: Lead) => {
     setSelectedLead(lead);
-    setLeadDetailsOpen(true);
+    setEditLeadDialogOpen(true);
   };
-  
-  const viewClientDetails = (client: Client) => {
+
+  const handleEditClient = (client: Client) => {
     setSelectedClient(client);
-    setClientDetailsOpen(true);
+    setEditClientDialogOpen(true);
   };
 
-  const handleEditLead = () => {
+  const handleDeleteLead = (leadId: string) => {
+    setLeadsData(leadsData.filter((lead) => lead.id !== leadId));
     toast({
-      title: "Lead updated",
-      description: "Lead information has been successfully updated",
+      title: "Lead Deleted",
+      description: "Lead has been deleted successfully.",
     });
-    setEditLeadDialogOpen(false);
   };
 
-  const handleScheduleFollowUp = () => {
+  const handleDeleteClient = (clientId: string) => {
+    setClientsData(clientsData.filter((client) => client.id !== clientId));
     toast({
-      title: "Follow-up scheduled",
-      description: "A follow-up has been scheduled for this lead",
+      title: "Client Deleted",
+      description: "Client has been deleted successfully.",
     });
-    setFollowUpDialogOpen(false);
-  };
-
-  const handleSendMessage = () => {
-    toast({
-      title: "Message sent",
-      description: "Your message has been sent successfully",
-    });
-    setMessageDialogOpen(false);
-  };
-
-  const handleAddNote = () => {
-    toast({
-      title: "Note added",
-      description: "Your note has been added to this lead",
-    });
-    setNotesDialogOpen(false);
-  };
-
-  const handleMoveToClient = () => {
-    if (selectedLead) {
-      toast({
-        title: "Lead converted to client",
-        description: `${selectedLead.name} has been successfully converted to a client`,
-      });
-      setMoveToClientDialogOpen(false);
-      // In a real application, this would update the database
-    }
-  };
-
-  const handleDeleteLead = () => {
-    if (selectedLead) {
-      toast({
-        title: "Lead deleted",
-        description: `${selectedLead.name} has been successfully deleted`,
-      });
-      setDeleteLeadDialogOpen(false);
-      setLeadDetailsOpen(false);
-      // In a real application, this would update the database
-    }
-  };
-  
-  const handleEditClient = () => {
-    toast({
-      title: "Client updated",
-      description: "Client information has been successfully updated",
-    });
-    setEditClientDialogOpen(false);
-  };
-  
-  const handleClientMessage = () => {
-    toast({
-      title: "Message sent",
-      description: "Your message has been sent to the client",
-    });
-    setClientMessageDialogOpen(false);
-  };
-  
-  const handleManageSubscription = () => {
-    toast({
-      title: "Subscription updated",
-      description: "The client's subscription has been updated",
-    });
-    setManageSubscriptionDialogOpen(false);
-  };
-  
-  const handleDeleteClient = () => {
-    if (selectedClient) {
-      toast({
-        title: "Client deleted",
-        description: `${selectedClient.name} has been successfully deleted`,
-      });
-      setDeleteClientDialogOpen(false);
-      setClientDetailsOpen(false);
-      // In a real application, this would update the database
-    }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'new':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50">New</Badge>;
+        return <Badge variant="secondary">New</Badge>;
       case 'contacted':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-50">Contacted</Badge>;
+        return <Badge variant="outline">Contacted</Badge>;
       case 'qualified':
-        return <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-50">Qualified</Badge>;
+        return <Badge>Qualified</Badge>;
       case 'proposal':
-        return <Badge variant="outline" className="bg-orange-50 text-orange-700 hover:bg-orange-50">Proposal</Badge>;
+        return <Badge variant="ghost">Proposal</Badge>;
       case 'converted':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Converted</Badge>;
+        return <Badge variant="success">Converted</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge>{status}</Badge>;
     }
   };
 
   const getPlanBadge = (plan: string) => {
     switch (plan) {
       case 'starter':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50">Starter</Badge>;
+        return <Badge variant="secondary">Starter</Badge>;
       case 'professional':
-        return <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-50">Professional</Badge>;
+        return <Badge>Professional</Badge>;
       case 'enterprise':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Enterprise</Badge>;
+        return <Badge variant="success">Enterprise</Badge>;
       default:
-        return <Badge variant="outline">{plan}</Badge>;
+        return <Badge>{plan}</Badge>;
     }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, maxSize: number = 1) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check file size (convert MB to bytes)
+    const maxSizeBytes = maxSize * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      toast({
+        title: "File too large",
+        description: `Image should be less than ${maxSize}MB`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // File is valid
+    toast({
+      title: "File uploaded",
+      description: "Image has been uploaded successfully",
+    });
   };
 
   return (
@@ -389,7 +475,7 @@ const LeadsCRM = () => {
                 Add Lead
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Lead</DialogTitle>
                 <DialogDescription>
@@ -398,29 +484,96 @@ const LeadsCRM = () => {
               </DialogHeader>
               
               <div className="grid gap-4 py-4">
+                {/* Avatar Upload */}
+                <div className="flex flex-col items-center mb-4">
+                  <Avatar className="w-24 h-24 mb-2">
+                    <AvatarFallback>
+                      <Image className="h-12 w-12 text-gray-400" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => leadAvatarRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Photo
+                    <span className="text-xs text-muted-foreground ml-2">(Max 1MB)</span>
+                  </Button>
+                  <input 
+                    type="file" 
+                    ref={leadAvatarRef}
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={(e) => handleFileUpload(e, 1)} 
+                  />
+                </div>
+                
+                {/* Basic Information */}
                 <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="lead-id">Customer ID</Label>
+                    <Input id="lead-id" placeholder="e.g., LEAD123" />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="lead-name">Full Name</Label>
                     <Input id="lead-name" placeholder="e.g., John Smith" />
                   </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="lead-company">Company</Label>
                     <Input id="lead-company" placeholder="e.g., Acme Corp" />
                   </div>
-                </div>
-                
-                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="lead-email">Email</Label>
                     <Input id="lead-email" type="email" placeholder="email@example.com" />
                   </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="lead-phone">Phone</Label>
-                    <Input id="lead-phone" placeholder="+1 (555) 123-4567" />
+                    <Input id="lead-phone" placeholder="e.g., 5551234567 (no country code)" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lead-street">Street</Label>
+                    <Input id="lead-street" placeholder="e.g., 123 Main St" />
                   </div>
                 </div>
                 
                 <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="lead-address">Address</Label>
+                    <Input id="lead-address" placeholder="e.g., Suite 400" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lead-area">Area</Label>
+                    <Input id="lead-area" placeholder="e.g., Downtown" />
+                  </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="lead-district">District</Label>
+                    <Input id="lead-district" placeholder="e.g., Central" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lead-state">State</Label>
+                    <Input id="lead-state" placeholder="e.g., California" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lead-country">Country</Label>
+                    <Input id="lead-country" placeholder="e.g., USA" />
+                  </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="lead-postal">Postal Code</Label>
+                    <Input id="lead-postal" placeholder="e.g., 90001" />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="lead-status">Status</Label>
                     <Select defaultValue="new">
@@ -504,7 +657,7 @@ const LeadsCRM = () => {
                 Add Client
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Client</DialogTitle>
                 <DialogDescription>
@@ -513,29 +666,96 @@ const LeadsCRM = () => {
               </DialogHeader>
               
               <div className="grid gap-4 py-4">
+                {/* Avatar Upload */}
+                <div className="flex flex-col items-center mb-4">
+                  <Avatar className="w-24 h-24 mb-2">
+                    <AvatarFallback>
+                      <Image className="h-12 w-12 text-gray-400" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => clientAvatarRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Photo
+                    <span className="text-xs text-muted-foreground ml-2">(Max 1MB)</span>
+                  </Button>
+                  <input 
+                    type="file" 
+                    ref={clientAvatarRef}
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={(e) => handleFileUpload(e, 1)} 
+                  />
+                </div>
+                
+                {/* Basic Information */}
                 <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="client-id">Customer ID</Label>
+                    <Input id="client-id" placeholder="e.g., CLIENT123" />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="client-name">Client Name</Label>
                     <Input id="client-name" placeholder="e.g., Acme Corporation" />
                   </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="client-company">Company</Label>
                     <Input id="client-company" placeholder="e.g., Acme Corp" />
                   </div>
-                </div>
-                
-                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="client-email">Email</Label>
                     <Input id="client-email" type="email" placeholder="contact@example.com" />
                   </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="client-phone">Phone</Label>
-                    <Input id="client-phone" placeholder="+1 (555) 123-4567" />
+                    <Input id="client-phone" placeholder="e.g., 5551234567 (no country code)" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client-street">Street</Label>
+                    <Input id="client-street" placeholder="e.g., 123 Main St" />
                   </div>
                 </div>
                 
                 <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="client-address">Address</Label>
+                    <Input id="client-address" placeholder="e.g., Suite 400" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client-area">Area</Label>
+                    <Input id="client-area" placeholder="e.g., Downtown" />
+                  </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="client-district">District</Label>
+                    <Input id="client-district" placeholder="e.g., Central" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client-state">State</Label>
+                    <Input id="client-state" placeholder="e.g., California" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client-country">Country</Label>
+                    <Input id="client-country" placeholder="e.g., USA" />
+                  </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="client-postal">Postal Code</Label>
+                    <Input id="client-postal" placeholder="e.g., 90001" />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="client-plan">Subscription Plan</Label>
                     <Select defaultValue="starter">
@@ -589,1134 +809,69 @@ const LeadsCRM = () => {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <Tabs defaultValue="leads" onValueChange={setActiveTab}>
-        <div className="flex justify-between items-center mb-4">
-          <TabsList>
-            <TabsTrigger value="leads" className="relative">
-              Leads
-              <span className="ml-1 text-xs text-foreground/70">{leads.length}</span>
-            </TabsTrigger>
-            <TabsTrigger value="clients" className="relative">
-              Clients
-              <span className="ml-1 text-xs text-foreground/70">{clients.length}</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Tabs defaultValue="leads" className="space-y-4" onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="leads">Leads</TabsTrigger>
+          <TabsTrigger value="clients">Clients</TabsTrigger>
+        </TabsList>
+        
+        {/* Leads Table */}
+        <TabsContent value="leads" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
               <Input
-                placeholder={`Search ${activeTab}...`}
-                className="pl-8 w-64"
+                type="text"
+                placeholder="Search leads..."
+                className="max-w-sm mr-2"
               />
+              <Button variant="outline" size="sm">
+                <Search className="mr-2 h-4 w-4" />
+                Search
+              </Button>
             </div>
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button>
             <Button variant="outline" size="sm">
-              <Upload className="h-4 w-4 mr-2" />
-              Import
+              <Filter className="mr-2 h-4 w-4" />
+              Filter
             </Button>
           </div>
-        </div>
 
-        <TabsContent value="leads">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex justify-between">
-                <div>
-                  <CardTitle>All Leads</CardTitle>
-                  <CardDescription>
-                    View and manage all your leads
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select defaultValue="all">
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="contacted">Contacted</SelectItem>
-                      <SelectItem value="qualified">Qualified</SelectItem>
-                      <SelectItem value="proposal">Proposal</SelectItem>
-                      <SelectItem value="converted">Converted</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead>Assigned To</TableHead>
-                      <TableHead>Next Follow-up</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {leads.map((lead) => (
-                      <TableRow key={lead.id}>
-                        <TableCell>
-                          <div 
-                            className="font-medium cursor-pointer hover:text-primary hover:underline"
-                            onClick={() => viewLeadDetails(lead)}
-                          >
-                            {lead.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground">{lead.email}</div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(lead.status)}</TableCell>
-                        <TableCell>{lead.company}</TableCell>
-                        <TableCell>{lead.source}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            {lead.assignedTo !== 'Unassigned' ? (
-                              <>
-                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs">
-                                  {lead.assignedTo.split(' ').map(n => n[0]).join('')}
-                                </div>
-                                <span className="text-sm">{lead.assignedTo}</span>
-                              </>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">Unassigned</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {lead.nextFollowUp ? (
-                            <div className="flex items-center gap-1.5">
-                              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                              <span className="text-sm">
-                                {new Date(lead.nextFollowUp).toLocaleDateString()}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">Not scheduled</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setEditLeadDialogOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setMoveToClientDialogOpen(true);
-                              }}
-                            >
-                              <UserCheck className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="text-red-500"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setDeleteLeadDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="clients">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex justify-between">
-                <div>
-                  <CardTitle>All Clients</CardTitle>
-                  <CardDescription>
-                    View and manage all your clients
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select defaultValue="all">
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Filter by plan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Plans</SelectItem>
-                      <SelectItem value="starter">Starter</SelectItem>
-                      <SelectItem value="professional">Professional</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Referred By</TableHead>
-                      <TableHead>Join Date</TableHead>
-                      <TableHead>Renewal</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {clients.map((client) => (
-                      <TableRow key={client.id}>
-                        <TableCell>
-                          <div 
-                            className="font-medium cursor-pointer hover:text-primary hover:underline"
-                            onClick={() => viewClientDetails(client)}
-                          >
-                            {client.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground">{client.company}</div>
-                        </TableCell>
-                        <TableCell>{getPlanBadge(client.plan)}</TableCell>
-                        <TableCell>
-                          <div className="text-sm">{client.email}</div>
-                          <div className="text-xs text-muted-foreground">{client.phone}</div>
-                        </TableCell>
-                        <TableCell>{client.referredBy}</TableCell>
-                        <TableCell>
-                          {new Date(client.joinDate).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-sm">
-                              {new Date(client.renewalDate).toLocaleDateString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => {
-                                setSelectedClient(client);
-                                setEditClientDialogOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => {
-                                setSelectedClient(client);
-                                setManageSubscriptionDialogOpen(true);
-                              }}
-                            >
-                              <Briefcase className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="text-red-500"
-                              onClick={() => {
-                                setSelectedClient(client);
-                                setDeleteClientDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      {/* Lead Details Dialog */}
-      <Dialog open={leadDetailsOpen} onOpenChange={setLeadDetailsOpen}>
-        {selectedLead && (
-          <DialogContent className="sm:max-w-[700px]">
-            <DialogHeader>
-              <DialogTitle className="text-xl">{selectedLead.name}</DialogTitle>
-              <div className="flex items-center gap-2 mt-1">
-                {getStatusBadge(selectedLead.status)}
-                <span className="text-sm text-muted-foreground">
-                  Created on {new Date(selectedLead.created).toLocaleDateString()}
-                </span>
-              </div>
-            </DialogHeader>
-            
-            <div className="grid gap-6 py-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Contact Information</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4 text-muted-foreground" />
-                        <span>{selectedLead.company}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span>{selectedLead.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>{selectedLead.phone}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Lead Details</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2">
-                        <div className="w-4 h-4 mt-0.5">
-                          <UserPlus className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <span>Source: {selectedLead.source}</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <div className="w-4 h-4 mt-0.5">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <span>Last Contact: {selectedLead.lastContact ? new Date(selectedLead.lastContact).toLocaleDateString() : 'Never'}</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <div className="w-4 h-4 mt-0.5">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <span>Next Follow-up: {selectedLead.nextFollowUp ? new Date(selectedLead.nextFollowUp).toLocaleString() : 'Not scheduled'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Assigned To</h3>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                        {selectedLead.assignedTo !== 'Unassigned'
-                          ? selectedLead.assignedTo.split(' ').map(n => n[0]).join('')
-                          : '?'}
-                      </div>
-                      <span>{selectedLead.assignedTo}</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Actions</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        variant="outline" 
-                        className="justify-start" 
-                        onClick={() => {
-                          setFollowUpDialogOpen(true);
-                          setLeadDetailsOpen(false);
-                        }}
+          <div className="relative overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Users className="h-4 w-4" />
+                  </TableHead>
+                  <TableHead>Customer ID</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Last Contact</TableHead>
+                  <TableHead>Next Follow-up</TableHead>
+                  <TableHead>Assigned To</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leadsData.map((lead) => (
+                  <TableRow key={lead.id}>
+                    <TableCell className="font-medium">
+                      <Avatar>
+                        <AvatarImage src={lead.avatar || ""} alt={lead.name} />
+                        <AvatarFallback>
+                          <Users className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell>{lead.customerId}</TableCell>
+                    <TableCell>{lead.name}</TableCell>
+                    <TableCell>{lead.company}</TableCell>
+                    <TableCell>
+                      <a
+                        href={`mailto:${lead.email}`}
+                        className="text-blue-500 hover:underline"
                       >
-                        <CalendarCheck className="mr-2 h-4 w-4" />
-                        Schedule Follow-up
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="justify-start"
-                        onClick={() => {
-                          setMessageDialogOpen(true);
-                          setLeadDetailsOpen(false);
-                        }}
-                      >
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Send Message
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="justify-start"
-                        onClick={() => {
-                          setNotesDialogOpen(true);
-                          setLeadDetailsOpen(false);
-                        }}
-                      >
-                        <ClipboardList className="mr-2 h-4 w-4" />
-                        Add Notes
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="justify-start"
-                        onClick={() => {
-                          setMoveToClientDialogOpen(true);
-                          setLeadDetailsOpen(false);
-                        }}
-                      >
-                        <UserCheck className="mr-2 h-4 w-4" />
-                        Convert to Client
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Pipeline Progress</h3>
-                  <span className="text-xs text-muted-foreground">
-                    {['new', 'contacted', 'qualified', 'proposal', 'converted'].indexOf(selectedLead.status) + 1}/5
-                  </span>
-                </div>
-                <Progress 
-                  className="h-2" 
-                  value={(((['new', 'contacted', 'qualified', 'proposal', 'converted'].indexOf(selectedLead.status) + 1) / 5) * 100)} 
-                />
-              </div>
-            </div>
-            
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setEditLeadDialogOpen(true);
-                  setLeadDetailsOpen(false);
-                }}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Lead
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  setDeleteLeadDialogOpen(true);
-                  setLeadDetailsOpen(false);
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Lead
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Client Details Dialog */}
-      <Dialog open={clientDetailsOpen} onOpenChange={setClientDetailsOpen}>
-        {selectedClient && (
-          <DialogContent className="sm:max-w-[700px]">
-            <DialogHeader>
-              <DialogTitle className="text-xl">{selectedClient.name}</DialogTitle>
-              <div className="flex items-center gap-2 mt-1">
-                {getPlanBadge(selectedClient.plan)}
-                <span className="text-sm text-muted-foreground">
-                  Client since {new Date(selectedClient.joinDate).toLocaleDateString()}
-                </span>
-              </div>
-            </DialogHeader>
-            
-            <div className="grid gap-6 py-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Contact Information</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4 text-muted-foreground" />
-                        <span>{selectedClient.company}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span>{selectedClient.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>{selectedClient.phone}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Subscription Details</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2">
-                        <div className="w-4 h-4 mt-0.5">
-                          <Briefcase className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <span>Plan: {selectedClient.plan.charAt(0).toUpperCase() + selectedClient.plan.slice(1)}</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <div className="w-4 h-4 mt-0.5">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <span>Renewal Date: {new Date(selectedClient.renewalDate).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <div className="w-4 h-4 mt-0.5">
-                          <UserPlus className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <span>Referred By: {selectedClient.referredBy}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Actions</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        variant="outline" 
-                        className="justify-start"
-                        onClick={() => {
-                          setManageSubscriptionDialogOpen(true);
-                          setClientDetailsOpen(false);
-                        }}
-                      >
-                        <Briefcase className="mr-2 h-4 w-4" />
-                        Manage Subscription
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="justify-start"
-                        onClick={() => {
-                          setClientMessageDialogOpen(true);
-                          setClientDetailsOpen(false);
-                        }}
-                      >
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Send Message
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setEditClientDialogOpen(true);
-                  setClientDetailsOpen(false);
-                }}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Client
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  setDeleteClientDialogOpen(true);
-                  setClientDetailsOpen(false);
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Client
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Edit Lead Dialog */}
-      <Dialog open={editLeadDialogOpen} onOpenChange={setEditLeadDialogOpen}>
-        {selectedLead && (
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Edit Lead</DialogTitle>
-              <DialogDescription>
-                Update information for {selectedLead.name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-lead-name">Full Name</Label>
-                  <Input id="edit-lead-name" defaultValue={selectedLead.name} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-lead-company">Company</Label>
-                  <Input id="edit-lead-company" defaultValue={selectedLead.company} />
-                </div>
-              </div>
-              
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-lead-email">Email</Label>
-                  <Input id="edit-lead-email" type="email" defaultValue={selectedLead.email} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-lead-phone">Phone</Label>
-                  <Input id="edit-lead-phone" defaultValue={selectedLead.phone} />
-                </div>
-              </div>
-              
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-lead-status">Status</Label>
-                  <Select defaultValue={selectedLead.status}>
-                    <SelectTrigger id="edit-lead-status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="contacted">Contacted</SelectItem>
-                      <SelectItem value="qualified">Qualified</SelectItem>
-                      <SelectItem value="proposal">Proposal</SelectItem>
-                      <SelectItem value="converted">Converted</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-lead-source">Source</Label>
-                  <Input id="edit-lead-source" defaultValue={selectedLead.source} />
-                </div>
-              </div>
-              
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-lead-assigned">Assigned To</Label>
-                  <Select defaultValue={selectedLead.assignedTo === 'Unassigned' ? 'unassigned' : 'assigned'}>
-                    <SelectTrigger id="edit-lead-assigned">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sarah">Sarah Miller</SelectItem>
-                      <SelectItem value="robert">Robert Brown</SelectItem>
-                      <SelectItem value="jessica">Jessica Lee</SelectItem>
-                      <SelectItem value="unassigned">Unassigned</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-lead-followup">Next Follow-up</Label>
-                  <Input 
-                    id="edit-lead-followup" 
-                    type="datetime-local" 
-                    defaultValue={selectedLead.nextFollowUp 
-                      ? new Date(selectedLead.nextFollowUp).toISOString().slice(0, 16) 
-                      : ''
-                    } 
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-lead-notes">Notes</Label>
-                <Textarea 
-                  id="edit-lead-notes" 
-                  placeholder="Add any additional information about this lead..."
-                  className="min-h-[80px]"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditLeadDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleEditLead}>
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Schedule Follow-Up Dialog */}
-      <Dialog open={followUpDialogOpen} onOpenChange={setFollowUpDialogOpen}>
-        {selectedLead && (
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Schedule Follow-Up</DialogTitle>
-              <DialogDescription>
-                Schedule a follow-up with {selectedLead.name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="followup-date">Follow-up Date & Time</Label>
-                <Input id="followup-date" type="datetime-local" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="followup-type">Follow-up Type</Label>
-                <Select defaultValue="call">
-                  <SelectTrigger id="followup-type">
-                    <SelectValue placeholder="Select follow-up type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="call">Phone Call</SelectItem>
-                    <SelectItem value="email">Email</SelectItem>
-                    <SelectItem value="meeting">Meeting</SelectItem>
-                    <SelectItem value="video">Video Call</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="followup-notes">Notes</Label>
-                <Textarea 
-                  id="followup-notes" 
-                  placeholder="Add any notes about this follow-up..."
-                  className="min-h-[80px]"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setFollowUpDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleScheduleFollowUp}>
-                Schedule Follow-up
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Send Message Dialog */}
-      <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
-        {selectedLead && (
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Send Message</DialogTitle>
-              <DialogDescription>
-                Send a message to {selectedLead.name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="message-subject">Subject</Label>
-                <Input id="message-subject" placeholder="Enter message subject" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="message-content">Message</Label>
-                <Textarea 
-                  id="message-content" 
-                  placeholder="Type your message here..."
-                  className="min-h-[150px]"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setMessageDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSendMessage}>
-                <Send className="mr-2 h-4 w-4" />
-                Send Message
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Add Notes Dialog */}
-      <Dialog open={notesDialogOpen} onOpenChange={setNotesDialogOpen}>
-        {selectedLead && (
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Add Notes</DialogTitle>
-              <DialogDescription>
-                Add notes for {selectedLead.name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="note-type">Note Type</Label>
-                <Select defaultValue="general">
-                  <SelectTrigger id="note-type">
-                    <SelectValue placeholder="Select note type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">General Note</SelectItem>
-                    <SelectItem value="call">Call Summary</SelectItem>
-                    <SelectItem value="meeting">Meeting Notes</SelectItem>
-                    <SelectItem value="email">Email Notes</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="note-content">Notes</Label>
-                <Textarea 
-                  id="note-content" 
-                  placeholder="Type your notes here..."
-                  className="min-h-[150px]"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setNotesDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddNote}>
-                Add Note
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Move to Client Dialog */}
-      <Dialog open={moveToClientDialogOpen} onOpenChange={setMoveToClientDialogOpen}>
-        {selectedLead && (
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Convert to Client</DialogTitle>
-              <DialogDescription>
-                Convert {selectedLead.name} from a lead to a client
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="client-plan">Subscription Plan</Label>
-                <Select defaultValue="starter">
-                  <SelectTrigger id="client-plan">
-                    <SelectValue placeholder="Select plan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="starter">Starter</SelectItem>
-                    <SelectItem value="professional">Professional</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="client-join">Join Date</Label>
-                <Input id="client-join" type="date" defaultValue={new Date().toISOString().split('T')[0]} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="client-renewal">Renewal Date</Label>
-                <Input 
-                  id="client-renewal" 
-                  type="date" 
-                  defaultValue={new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="conversion-notes">Notes</Label>
-                <Textarea 
-                  id="conversion-notes" 
-                  placeholder="Add any notes about this client conversion..."
-                  className="min-h-[80px]"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setMoveToClientDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleMoveToClient}>
-                <UserCheck className="mr-2 h-4 w-4" />
-                Convert to Client
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Delete Lead Dialog */}
-      <Dialog open={deleteLeadDialogOpen} onOpenChange={setDeleteLeadDialogOpen}>
-        {selectedLead && (
-          <DialogContent className="sm:max-w-[450px]">
-            <DialogHeader>
-              <DialogTitle>Delete Lead</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete {selectedLead.name}? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="delete-reason">Reason (Optional)</Label>
-                <Select defaultValue="">
-                  <SelectTrigger id="delete-reason">
-                    <SelectValue placeholder="Select reason" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">No specific reason</SelectItem>
-                    <SelectItem value="duplicate">Duplicate lead</SelectItem>
-                    <SelectItem value="invalid">Invalid information</SelectItem>
-                    <SelectItem value="not-interested">Not interested</SelectItem>
-                    <SelectItem value="gone-competitor">Gone with competitor</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteLeadDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteLead}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Lead
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Edit Client Dialog */}
-      <Dialog open={editClientDialogOpen} onOpenChange={setEditClientDialogOpen}>
-        {selectedClient && (
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Edit Client</DialogTitle>
-              <DialogDescription>
-                Update information for {selectedClient.name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-client-name">Client Name</Label>
-                  <Input id="edit-client-name" defaultValue={selectedClient.name} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-client-company">Company</Label>
-                  <Input id="edit-client-company" defaultValue={selectedClient.company} />
-                </div>
-              </div>
-              
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-client-email">Email</Label>
-                  <Input id="edit-client-email" type="email" defaultValue={selectedClient.email} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-client-phone">Phone</Label>
-                  <Input id="edit-client-phone" defaultValue={selectedClient.phone} />
-                </div>
-              </div>
-              
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-client-referred">Referred By</Label>
-                  <Input id="edit-client-referred" defaultValue={selectedClient.referredBy} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-client-join">Join Date</Label>
-                  <Input 
-                    id="edit-client-join" 
-                    type="date" 
-                    defaultValue={new Date(selectedClient.joinDate).toISOString().split('T')[0]} 
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-client-notes">Notes</Label>
-                <Textarea 
-                  id="edit-client-notes" 
-                  placeholder="Add any additional information about this client..."
-                  className="min-h-[80px]"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditClientDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleEditClient}>
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Client Message Dialog */}
-      <Dialog open={clientMessageDialogOpen} onOpenChange={setClientMessageDialogOpen}>
-        {selectedClient && (
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Send Message</DialogTitle>
-              <DialogDescription>
-                Send a message to {selectedClient.name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="client-message-subject">Subject</Label>
-                <Input id="client-message-subject" placeholder="Enter message subject" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="client-message-content">Message</Label>
-                <Textarea 
-                  id="client-message-content" 
-                  placeholder="Type your message here..."
-                  className="min-h-[150px]"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setClientMessageDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleClientMessage}>
-                <Send className="mr-2 h-4 w-4" />
-                Send Message
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Manage Subscription Dialog */}
-      <Dialog open={manageSubscriptionDialogOpen} onOpenChange={setManageSubscriptionDialogOpen}>
-        {selectedClient && (
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Manage Subscription</DialogTitle>
-              <DialogDescription>
-                Update subscription for {selectedClient.name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="manage-plan">Subscription Plan</Label>
-                <Select defaultValue={selectedClient.plan}>
-                  <SelectTrigger id="manage-plan">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="starter">Starter</SelectItem>
-                    <SelectItem value="professional">Professional</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="manage-renewal">Renewal Date</Label>
-                <Input 
-                  id="manage-renewal" 
-                  type="date" 
-                  defaultValue={new Date(selectedClient.renewalDate).toISOString().split('T')[0]} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="manage-notes">Notes</Label>
-                <Textarea 
-                  id="manage-notes" 
-                  placeholder="Add any notes about this subscription change..."
-                  className="min-h-[80px]"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setManageSubscriptionDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleManageSubscription}>
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-      
-      {/* Delete Client Dialog */}
-      <Dialog open={deleteClientDialogOpen} onOpenChange={setDeleteClientDialogOpen}>
-        {selectedClient && (
-          <DialogContent className="sm:max-w-[450px]">
-            <DialogHeader>
-              <DialogTitle>Delete Client</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete {selectedClient.name}? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="delete-client-reason">Reason (Optional)</Label>
-                <Select defaultValue="">
-                  <SelectTrigger id="delete-client-reason">
-                    <SelectValue placeholder="Select reason" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">No specific reason</SelectItem>
-                    <SelectItem value="duplicate">Duplicate client</SelectItem>
-                    <SelectItem value="gone-competitor">Gone with competitor</SelectItem>
-                    <SelectItem value="out-of-business">Out of business</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteClientDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteClient}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Client
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
-    </div>
-  );
-};
-
-export default LeadsCRM;
