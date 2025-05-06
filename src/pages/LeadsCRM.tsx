@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -901,4 +902,4 @@ const LeadsCRM = () => {
                     <div className="space-y-2">
                       <div className="flex items-start gap-2">
                         <div className="w-4 h-4 mt-0.5">
-                          <UserPlus className="h-4 w-4 text-muted-foreground" />
+                          <UserPlus className="h-4 w-4 text-muted-foreground
