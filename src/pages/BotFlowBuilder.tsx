@@ -1,1245 +1,446 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import React, { useState, useEffect, useCallback } from 'react';
+import ReactFlow, {
+  addEdge,
+  useNodesState,
+  useEdgesState,
+  Controls,
+  MiniMap,
+  Background,
+  Node,
+  Edge,
+  useReactFlow,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
-  ReactFlow, Background, Controls, MiniMap, useNodesState, 
-  useEdgesState, addEdge, Connection, Panel 
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import { 
-  Bot, MessageSquare, Copy, Zap, Key, ArrowRight, 
-  MessageSquarePlus, FileText, Plus, Save, Trash2,
-  Code, MoreHorizontal, Minus, Loader2, LogIn,
-  Info, Facebook, Instagram, Link, Globe, Settings
-} from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from '@/integrations/supabase/client';
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
-// Import custom node components
-import StartNode from '@/components/botflow/StartNode';
-import MessageNode from '@/components/botflow/MessageNode';
-import ConditionNode from '@/components/botflow/ConditionNode';
-import AIAssistantNode from '@/components/botflow/AIAssistantNode';
-import { MenuNode } from '@/components/botflow/MenuNode';
-import KeywordTriggerNode from '@/components/botflow/KeywordTriggerNode';
-import FunctionNode, { FunctionNodeData } from '@/components/botflow/FunctionNode';
-import CustomEdge from '@/components/botflow/CustomEdge';
-import ConnectionLine from '@/components/botflow/ConnectionLine';
-import { FlowTemplateSelector } from '@/components/botflow/FlowTemplateSelector';
-import { NodePalette } from '@/components/botflow/NodePalette';
-import { KeywordManager } from '@/components/botflow/KeywordManager';
-import { SavedFlowsList } from '@/components/botflow/SavedFlowsList';
-import { PlanDetailsModal } from '@/components/botflow/PlanDetailsModal';
-import PlatformConnectDialog from '@/components/botflow/PlatformConnectDialog';
+import { v4 as uuidv4 } from 'uuid';
 
-// Node types registry
-const nodeTypes = {
-  start: StartNode,
-  message: MessageNode,
-  condition: ConditionNode,
-  aiAssistant: AIAssistantNode,
-  menu: MenuNode,
-  keywordTrigger: KeywordTriggerNode,
-  function: FunctionNode,
-};
+// Custom node types
+import TextInputNode from '@/components/nodes/TextInputNode';
+import DisplayTextNode from '@/components/nodes/DisplayTextNode';
+import ImageNode from '@/components/nodes/ImageNode';
+import VideoNode from '@/components/nodes/VideoNode';
+import AudioNode from '@/components/nodes/AudioNode';
+import OptionSelectNode from '@/components/nodes/OptionSelectNode';
+import DatePickerNode from '@/components/nodes/DatePickerNode';
+import FileUploadNode from '@/components/nodes/FileUploadNode';
+import NumberInputNode from '@/components/nodes/NumberInputNode';
+import EmailInputNode from '@/components/nodes/EmailInputNode';
+import PhoneNumberInputNode from '@/components/nodes/PhoneNumberInputNode';
+import AddressInputNode from '@/components/nodes/AddressInputNode';
 
-// Edge types registry
-const edgeTypes = {
-  custom: CustomEdge,
-};
+// Layout
+import { useWindowSize } from '@uidotdev/usehooks';
 
-// Initial flow data
-const initialNodes = [
-  {
-    id: 'start-1',
-    type: 'start',
-    data: { label: 'Start' },
-    position: { x: 250, y: 0 },
-  },
-];
+// Icons
+import { Save, Upload, Download } from 'lucide-react';
 
-const initialEdges = [];
+// Helper functions
+import { downloadAsJson, uploadFromJson } from '@/utils/flowUtils';
 
-// Sample templates for quick start
-const flowTemplates = [
-  {
-    id: 'welcome-flow',
-    name: 'Welcome Flow',
-    description: 'Greet users and collect basic information',
-    icon: <MessageSquare className="h-10 w-10 text-blue-500" />,
-  },
-  {
-    id: 'support-flow',
-    name: 'Support Bot',
-    description: 'Handle common customer support inquiries',
-    icon: <Bot className="h-10 w-10 text-purple-500" />,
-  },
-  {
-    id: 'sales-flow',
-    name: 'Lead Generation',
-    description: 'Qualify leads and collect contact information',
-    icon: <Zap className="h-10 w-10 text-green-500" />,
-  },
-  {
-    id: 'faq-flow',
-    name: 'FAQ Bot',
-    description: 'Answer frequently asked questions automatically',
-    icon: <Key className="h-10 w-10 text-amber-500" />,
-  },
-];
+// Import our new helper
+import { safeSupabaseTable, getTableData, ensureTableExists } from "@/utils/supabaseHelpers";
 
 const BotFlowBuilder = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [flowName, setFlowName] = useState('Untitled Flow');
-  const [activeTab, setActiveTab] = useState("editor");
+  const { width, height } = useWindowSize();
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
+  const reactFlowInstance = useReactFlow();
+  const [flowName, setFlowName] = useState('');
+  const [flowKeywords, setFlowKeywords] = useState<string[]>([]);
+  const [keywordInput, setKeywordInput] = useState('');
+	const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
-  const [selectedFlow, setSelectedFlow] = useState(null);
-  const [userFlows, setUserFlows] = useState([]);
-  const [triggerKeywords, setTriggerKeywords] = useState(['help', 'support']);
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const [newBotDialogOpen, setNewBotDialogOpen] = useState(false);
-  const [newBotName, setNewBotName] = useState('');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [flowToDelete, setFlowToDelete] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [functionDialogOpen, setFunctionDialogOpen] = useState(false);
-  const [functionCode, setFunctionCode] = useState('function process(input) {\n  // Your code here\n  return input;\n}');
-  const [functionName, setFunctionName] = useState('Process Function');
-  const [platforms, setPlatforms] = useState(['whatsapp', 'facebook', 'instagram', 'telegram', 'website']);
-  const [selectedPlatforms, setSelectedPlatforms] = useState(['whatsapp']);
-  const [planDetailsOpen, setPlanDetailsOpen] = useState(false);
-  const [currentPlan, setCurrentPlan] = useState("Pro"); // This should come from user data in a real app
-  const [platformLimits, setPlatformLimits] = useState({
-    whatsapp: 5,
-    facebook: 5,
-    instagram: 5,
-    telegram: 5,
-    website: 5
-  });
-  
-  // State for platform connection dialog
-  const [connectDialogOpen, setConnectDialogOpen] = useState(false);
-  const [connectingPlatform, setConnectingPlatform] = useState<'whatsapp' | 'facebook' | 'instagram' | 'telegram' | 'website'>('whatsapp');
-  const [connectingAccountIndex, setConnectingAccountIndex] = useState(0);
-  const [connectedAccounts, setConnectedAccounts] = useState<{
-    [key: string]: boolean;
-  }>({});
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFlow, setSelectedFlow] = useState<{ id: string; name: string } | null>(null);
+  const [availableFlows, setAvailableFlows] = useState<{ id: string; name: string }[]>([]);
 
-  // Open connection dialog for a specific platform
-  const openConnectDialog = (platform: 'whatsapp' | 'facebook' | 'instagram' | 'telegram' | 'website', index: number) => {
-    setConnectingPlatform(platform);
-    setConnectingAccountIndex(index);
-    setConnectDialogOpen(true);
+  const nodeTypes = {
+    textInput: TextInputNode,
+    displayText: DisplayTextNode,
+    image: ImageNode,
+    video: VideoNode,
+    audio: AudioNode,
+    optionSelect: OptionSelectNode,
+    datePicker: DatePickerNode,
+    fileUpload: FileUploadNode,
+    numberInput: NumberInputNode,
+    emailInput: EmailInputNode,
+    phoneNumberInput: PhoneNumberInputNode,
+    addressInput: AddressInputNode,
   };
 
-  // Handle successful connection
-  const handleConnectionSuccess = () => {
-    // Mark this account as connected
-    setConnectedAccounts(prev => ({
-      ...prev,
-      [`${connectingPlatform}-${connectingAccountIndex}`]: true
-    }));
-  };
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges]
+  );
 
-  // Check if a specific account is connected
-  const isAccountConnected = (platform: string, index: number) => {
-    return connectedAccounts[`${platform}-${index}`] || false;
-  };
+  const handlePlatformChange = (platform: string) => {
+		setSelectedPlatforms((prevPlatforms) =>
+			prevPlatforms.includes(platform)
+				? prevPlatforms.filter((p) => p !== platform)
+				: [...prevPlatforms, platform]
+		);
+	};
 
-  // Check for authentication
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        setIsAuthenticated(!!data.session);
-        
-        if (data.session) {
-          fetchUserFlows();
-        }
-      } catch (error) {
-        console.error("Error checking authentication:", error);
-      } finally {
-        setIsCheckingAuth(false);
-      }
+  const addNode = (type: string) => {
+    const id = uuidv4();
+    const newNode = {
+      id,
+      type,
+      data: { label: `${type} node` },
+      position: { x: 250, y: 25 },
     };
-    
-    checkAuth();
-  }, []);
+    setNodes([...nodes, newNode]);
+  };
 
-  // Fetch user's saved flows
-  const fetchUserFlows = async () => {
-    try {
-      setIsLoading(true);
-      
-      const { data: flows, error } = await supabase.functions.invoke('get_user_bot_flows');
-      
-      if (error) {
-        console.error("Error fetching flows using edge function:", error);
-        
-        // Fallback to direct query
-        const { data: directFlows, error: directError } = await supabase
-          .from('bot_flows')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (directError) throw directError;
-        setUserFlows(directFlows || []);
-      } else {
-        setUserFlows(flows || []);
-      }
-    } catch (error) {
-      console.error("Error fetching flows:", error);
-      toast({
-        title: "Failed to load your flows",
-        description: "There was an error loading your saved flows.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  const handleAddKeyword = () => {
+    if (keywordInput && !flowKeywords.includes(keywordInput)) {
+      setFlowKeywords([...flowKeywords, keywordInput]);
+      setKeywordInput('');
     }
   };
 
-  // Connect nodes when connections are made
-  const onConnect = (params: Connection) => {
-    setEdges((eds) => addEdge({ ...params, type: 'custom', animated: true }, eds));
+  const handleRemoveKeyword = (keywordToRemove: string) => {
+    setFlowKeywords(flowKeywords.filter((keyword) => keyword !== keywordToRemove));
   };
 
-  // Add a new node to the flow
-  const addNode = (type: string, label: string) => {
-    if (type === 'function') {
-      const nodeData: FunctionNodeData = {
-        label,
-        functionCode: 'function process(input) {\n  // Your code here\n  return input;\n}'
-      };
-      
-      const newNode = {
-        id: `${type}-${nodes.length + 1}`,
-        type,
-        position: { x: 250, y: nodes.length * 100 + 100 },
-        data: nodeData,
-      };
-      
-      setNodes((nds) => [...nds, newNode]);
-    } else {
-      const newNode = {
-        id: `${type}-${nodes.length + 1}`,
-        type,
-        position: { x: 250, y: nodes.length * 100 + 100 },
-        data: { label },
-      };
-      
-      setNodes((nds) => [...nds, newNode]);
-    }
-    
-    // If there's at least one node, connect to the last one
-    if (nodes.length > 0) {
-      const lastNode = nodes[nodes.length - 1];
-      const newEdge = {
-        id: `e${lastNode.id}-${type}-${nodes.length + 1}`,
-        source: lastNode.id,
-        target: `${type}-${nodes.length + 1}`,
-        type: 'custom',
-        animated: true,
-      };
-      setEdges((eds) => [...eds, newEdge]);
-    }
-    
-    toast({
-      title: "Node Added",
-      description: `Added ${label} node to the flow`,
-    });
+  const handleDownload = () => {
+    downloadAsJson(nodes, edges, flowName);
   };
 
-  // Open function dialog
-  const handleAddFunctionNode = () => {
-    setFunctionName('Process Function');
-    setFunctionCode('function process(input) {\n  // Your code here\n  return input;\n}');
-    setFunctionDialogOpen(true);
+  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    uploadFromJson(event, setNodes, setEdges, setFlowName);
   };
 
-  // Create function node
-  const createFunctionNode = () => {
-    addNode('function', functionName);
-    setFunctionDialogOpen(false);
-  };
-
-  // Load a template flow
-  const loadTemplate = (templateId) => {
+  // Update the function that loads flows to use our helper
+  const loadUserFlows = async () => {
     setIsLoading(true);
     
-    setTimeout(() => {
-      let templateNodes = [];
-      let templateEdges = [];
+    try {
+      // Check if the table exists first
+      await ensureTableExists('bot_flows');
       
-      if (templateId === 'welcome-flow') {
-        templateNodes = [
-          { id: 'start-1', type: 'start', data: { label: 'Start' }, position: { x: 250, y: 0 } },
-          { id: 'message-1', type: 'message', data: { label: 'Welcome Message', message: 'Hello! Welcome to our service. How can I help you today?' }, position: { x: 250, y: 100 } },
-          { id: 'menu-1', type: 'menu', data: { label: 'Menu Options', options: ['Product Information', 'Support', 'Pricing', 'Talk to agent'] }, position: { x: 250, y: 200 } },
-        ];
-        templateEdges = [
-          { id: 'e1-2', source: 'start-1', target: 'message-1', type: 'custom', animated: true },
-          { id: 'e2-3', source: 'message-1', target: 'menu-1', type: 'custom', animated: true },
-        ];
-      } else if (templateId === 'support-flow') {
-        templateNodes = [
-          { id: 'start-1', type: 'start', data: { label: 'Start' }, position: { x: 250, y: 0 } },
-          { id: 'message-1', type: 'message', data: { label: 'Support Greeting', message: 'Welcome to customer support. What issue are you experiencing?' }, position: { x: 250, y: 100 } },
-          { id: 'condition-1', type: 'condition', data: { label: 'Check Issue Type', condition: 'issue_type' }, position: { x: 250, y: 200 } },
-          { id: 'aiAssistant-1', type: 'aiAssistant', data: { label: 'AI Support Agent', prompt: 'Help the customer with their issue using the context provided' }, position: { x: 100, y: 300 } },
-          { id: 'message-2', type: 'message', data: { label: 'Human Agent', message: 'Connecting you to a human agent...' }, position: { x: 400, y: 300 } },
-        ];
-        templateEdges = [
-          { id: 'e1-2', source: 'start-1', target: 'message-1', type: 'custom', animated: true },
-          { id: 'e2-3', source: 'message-1', target: 'condition-1', type: 'custom', animated: true },
-          { id: 'e3-4', source: 'condition-1', target: 'aiAssistant-1', type: 'custom', animated: true, label: 'Common Issue' },
-          { id: 'e3-5', source: 'condition-1', target: 'message-2', type: 'custom', animated: true, label: 'Complex Issue' },
-        ];
-      } else if (templateId === 'sales-flow') {
-        // Sales flow template
-        templateNodes = [
-          { id: 'start-1', type: 'start', data: { label: 'Start' }, position: { x: 250, y: 0 } },
-          { id: 'message-1', type: 'message', data: { label: 'Sales Greeting', message: 'Hi there! Interested in learning about our products?' }, position: { x: 250, y: 100 } },
-          { id: 'menu-1', type: 'menu', data: { label: 'Product Interest', options: ['Basic Plan', 'Premium Plan', 'Enterprise Solution', 'Just Browsing'] }, position: { x: 250, y: 200 } },
-          { id: 'message-2', type: 'message', data: { label: 'Collect Contact', message: 'Great choice! Could you share your email to receive more information?' }, position: { x: 250, y: 300 } },
-          { id: 'aiAssistant-1', type: 'aiAssistant', data: { label: 'AI Sales Assistant', prompt: 'Respond to specific product questions and provide tailored recommendations' }, position: { x: 250, y: 400 } },
-          { id: 'function-1', type: 'function', data: { label: 'Data Processor', functionCode: 'function processLead(data) {\n  // Format user data for CRM\n  return {\n    email: data.email,\n    interest: data.selection\n  };\n}' }, position: { x: 250, y: 500 } },
-        ];
-        templateEdges = [
-          { id: 'e1-2', source: 'start-1', target: 'message-1', type: 'custom', animated: true },
-          { id: 'e2-3', source: 'message-1', target: 'menu-1', type: 'custom', animated: true },
-          { id: 'e3-4', source: 'menu-1', target: 'message-2', type: 'custom', animated: true },
-          { id: 'e4-5', source: 'message-2', target: 'aiAssistant-1', type: 'custom', animated: true },
-          { id: 'e5-6', source: 'aiAssistant-1', target: 'function-1', type: 'custom', animated: true },
-        ];
-      } else if (templateId === 'faq-flow') {
-        // FAQ flow template
-        templateNodes = [
-          { id: 'start-1', type: 'start', data: { label: 'Start' }, position: { x: 250, y: 0 } },
-          { id: 'keywordTrigger-1', type: 'keywordTrigger', data: { label: 'FAQ Keywords', keywords: ['pricing', 'features', 'subscription', 'cancel'] }, position: { x: 250, y: 100 } },
-          { id: 'aiAssistant-1', type: 'aiAssistant', data: { label: 'FAQ AI Assistant', prompt: 'Answer frequently asked questions based on the knowledge base' }, position: { x: 250, y: 200 } },
-          { id: 'message-1', type: 'message', data: { label: 'Fallback', message: "I'm sorry, I couldn't find information about that. Would you like to talk to a human agent?" }, position: { x: 250, y: 300 } },
-          { id: 'function-1', type: 'function', data: { label: 'Log Question', functionCode: 'function logUnansweredQuestion(question) {\n  // Log questions that could not be answered\n  console.log("Unanswered:", question);\n  return question;\n}' }, position: { x: 250, y: 400 } },
-        ];
-        templateEdges = [
-          { id: 'e1-2', source: 'start-1', target: 'keywordTrigger-1', type: 'custom', animated: true },
-          { id: 'e2-3', source: 'keywordTrigger-1', target: 'aiAssistant-1', type: 'custom', animated: true, label: 'Keyword Match' },
-          { id: 'e2-4', source: 'keywordTrigger-1', target: 'message-1', type: 'custom', animated: true, label: 'No Match' },
-          { id: 'e4-5', source: 'message-1', target: 'function-1', type: 'custom', animated: true },
-        ];
-      } else if (typeof templateId === 'object' && templateId.id) {
-        // Load a user-saved flow
-        templateNodes = templateId.flow_data.nodes;
-        templateEdges = templateId.flow_data.edges;
-        setFlowName(templateId.name);
-        setTriggerKeywords(templateId.keywords || []);
+      // Use our type-safe wrapper for Supabase operations
+      const { data, error } = await safeSupabaseTable('bot_flows')
+        .select();
+      
+      if (error) {
+        throw error;
       }
       
-      setNodes(templateNodes);
-      setEdges(templateEdges);
-      
-      if (typeof templateId === 'string') {
-        setFlowName(flowTemplates.find(t => t.id === templateId)?.name || 'Untitled Flow');
-        setSelectedFlow(templateId);
-      } else {
-        setSelectedFlow(templateId.id);
+      if (data) {
+        // Process the flow data
+        const flows = data.map((flow) => ({
+          id: flow.id,
+          name: flow.name,
+        }));
+        setAvailableFlows(flows);
       }
-      
-      toast({
-        title: "Flow Loaded",
-        description: `Loaded ${typeof templateId === 'string' ? flowTemplates.find(t => t.id === templateId)?.name : templateId.name}`,
-      });
-      
+    } catch (error) {
+      console.error('Error fetching user flows:', error);
+      toast.error('Failed to load your flows');
+    } finally {
       setIsLoading(false);
-    }, 800);
-  };
-
-  // Clone a flow
-  const cloneFlow = () => {
-    if (!selectedFlow) {
-      toast({
-        title: "No flow selected",
-        description: "Please select a flow to clone",
-        variant: "destructive",
-      });
-      return;
     }
-
-    // Create a deep copy of the current nodes and edges
-    const clonedNodes = JSON.parse(JSON.stringify(nodes));
-    const clonedEdges = JSON.parse(JSON.stringify(edges));
-
-    // Save the cloned flow with a new name
-    saveFlowToDb(`${flowName} (Clone)`, clonedNodes, clonedEdges, [...triggerKeywords], [...selectedPlatforms]);
-
-    toast({
-      title: "Flow Cloned",
-      description: `Created a clone of "${flowName}"`,
-    });
   };
 
-  // Delete a flow
-  const handleDeleteFlow = (flow) => {
-    setFlowToDelete(flow);
-    setDeleteDialogOpen(true);
-  };
+  useEffect(() => {
+    loadUserFlows();
+  }, []);
 
-  const confirmDeleteFlow = async () => {
-    if (!flowToDelete) return;
-    
+  const loadFlow = async (flowId: string) => {
+    setIsLoading(true);
     try {
-      setIsDeleting(true);
+      // Check if the table exists first
+      await ensureTableExists('bot_flows');
       
-      const { error } = await supabase.functions.invoke('delete_bot_flow', {
-        body: { id: flowToDelete.id }
-      });
+      // Load the flow data using our helper
+      const { data, error } = await safeSupabaseTable('bot_flows')
+        .select()
+        .eq('id', flowId);
       
-      if (error) throw error;
-      
-      toast({
-        title: "Flow Deleted",
-        description: `Deleted "${flowToDelete.name}" successfully`,
-      });
-      
-      // If the deleted flow was selected, reset to default
-      if (selectedFlow === flowToDelete.id) {
-        setNodes(initialNodes);
-        setEdges(initialEdges);
-        setFlowName('Untitled Flow');
-        setSelectedFlow(null);
+      if (error) {
+        throw error;
       }
       
-      // Refresh the list
-      fetchUserFlows();
-      
-    } catch (error) {
-      console.error("Error deleting flow:", error);
-      toast({
-        title: "Delete Failed",
-        description: "There was an error deleting your flow",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-      setDeleteDialogOpen(false);
-      setFlowToDelete(null);
-    }
-  };
-
-  // Add/edit trigger keywords
-  const handleKeywordChange = (newKeywords) => {
-    setTriggerKeywords(newKeywords);
-    
-    toast({
-      title: "Trigger Keywords Updated",
-      description: `Updated the trigger keywords for this flow`,
-    });
-  };
-
-  // Handle platform selection
-  const handlePlatformChange = (platform) => {
-    const isPlatformSelected = selectedPlatforms.includes(platform);
-
-    if (!isPlatformSelected) {
-      // Check if adding would exceed the limit
-      if (selectedPlatforms.length >= getTotalPlatformLimit()) {
-        toast({
-          title: "Account limit reached",
-          description: `Your ${currentPlan} plan allows ${getTotalPlatformLimit()} total platform connections. Upgrade for more.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Check if adding would exceed the platform-specific limit
-      const platformType = platform.split('-')[0]; // Extract 'whatsapp', 'facebook', etc.
-      const platformCount = countPlatformSelections(platformType);
-      if (platformCount >= platformLimits[platformType]) {
-        toast({
-          title: `${platformType} account limit reached`,
-          description: `Your plan allows ${platformLimits[platformType]} ${platformType} accounts. Upgrade for more.`,
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    setSelectedPlatforms(current => 
-      current.includes(platform)
-        ? current.filter(p => p !== platform)
-        : [...current, platform]
-    );
-  };
-
-  // Count how many selections of a specific platform are already made
-  const countPlatformSelections = (platformType) => {
-    return selectedPlatforms.filter(p => p.startsWith(platformType)).length;
-  };
-
-  // Get total platform limit based on plan
-  const getTotalPlatformLimit = () => {
-    switch (currentPlan) {
-      case "Free":
-        return 3; // 1 per platform
-      case "Pro":
-        return 15; // 5 per platform
-      case "Business":
-        return 60; // 20 per platform
-      case "Enterprise":
-        return Infinity;
-      default:
-        return 3;
-    }
-  };
-
-  // Open plan details modal
-  const openPlanDetails = () => {
-    setPlanDetailsOpen(true);
-  };
-
-  // Open save dialog
-  const openSaveDialog = () => {
-    setSaveDialogOpen(true);
-  };
-
-  // Open new bot dialog
-  const openNewBotDialog = () => {
-    setNewBotDialogOpen(true);
-  };
-
-  // Create a new bot flow
-  const createNewBot = () => {
-    if (!newBotName.trim()) {
-      toast({
-        title: "Name required",
-        description: "Please provide a name for your new bot flow",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setFlowName(newBotName);
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-    setTriggerKeywords(['help', 'support']);
-    setSelectedPlatforms(['whatsapp']);
-    setSelectedFlow(null);
-    setNewBotDialogOpen(false);
-    setNewBotName('');
-    
-    toast({
-      title: "New Bot Created",
-      description: `Created a new bot flow "${newBotName}"`,
-    });
-  };
-
-  // Save the current flow to the database
-  const saveFlowToDb = async (
-    name = flowName, 
-    flowNodes = nodes, 
-    flowEdges = edges, 
-    keywords = triggerKeywords,
-    platforms = selectedPlatforms
-  ) => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to save your flow",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      const flowData = {
-        name: name,
-        flow_data: {
-          nodes: flowNodes,
-          edges: flowEdges,
-          platforms: platforms
-        },
-        keywords: keywords,
-        user_id: userData.user.id
-      };
-
-      // If selectedFlow is a string ID from one of our templates, create a new flow
-      const isUpdate = selectedFlow && typeof selectedFlow !== 'string';
-
-      let result;
-      if (isUpdate) {
-        // Update existing flow
-        const { data, error } = await supabase
-          .from('bot_flows')
-          .update(flowData)
-          .eq('id', selectedFlow)
-          .select();
+      if (data && data.length > 0) {
+        const flowData = data[0];
+        setFlowName(flowData.name);
+        setFlowKeywords(flowData.keywords || []);
+        setSelectedPlatforms(flowData.flow_data?.platforms || []);
         
-        if (error) throw error;
-        result = data[0];
+        // Ensure flow_data is correctly structured
+        if (flowData.flow_data && typeof flowData.flow_data === 'object') {
+          const { nodes: loadedNodes, edges: loadedEdges } = flowData.flow_data;
+          setNodes(loadedNodes || []);
+          setEdges(loadedEdges || []);
+        } else {
+          console.warn('Flow data is missing or malformed.');
+          toast.warn('Flow data is missing or malformed.');
+          setNodes([]);
+          setEdges([]);
+        }
       } else {
-        // Create new flow
-        const { data, error } = await supabase
-          .from('bot_flows')
-          .insert(flowData)
-          .select();
-        
-        if (error) throw error;
-        result = data[0];
-        setSelectedFlow(result.id);
+        console.warn('Flow not found.');
+        toast.warn('Flow not found.');
+        setNodes([]);
+        setEdges([]);
       }
-
-      toast({
-        title: "Flow Saved",
-        description: `${isUpdate ? 'Updated' : 'Saved'} "${name}" successfully`,
-      });
-
-      // Refresh user flows
-      fetchUserFlows();
-      setSaveDialogOpen(false);
     } catch (error) {
-      console.error("Error saving flow:", error);
-      toast({
-        title: "Save Failed",
-        description: "There was an error saving your flow",
-        variant: "destructive",
-      });
+      console.error('Error loading flow:', error);
+      toast.error('Failed to load flow');
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
+      setIsDialogOpen(false);
     }
   };
 
-  // Save the current flow
-  const saveFlow = () => {
-    if (!flowName || flowName === 'Untitled Flow') {
-      openSaveDialog();
-    } else {
-      saveFlowToDb();
+  // Update saveFlow function
+  const saveFlow = async () => {
+    try {
+      if (!flowName) {
+        toast.error('Please enter a flow name');
+        return;
+      }
+      
+      // Prepare the flow data
+      const flow = {
+        name: flowName,
+        flow_data: {
+          nodes: nodes,
+          edges: edges,
+          platforms: selectedPlatforms,
+        },
+        keywords: flowKeywords,
+        user_id: '00000000-0000-0000-0000-000000000000', // Mock user ID
+      };
+      
+      // Check if the table exists first
+      await ensureTableExists('bot_flows');
+      
+      // Save the flow using our helper
+      const { error } = await safeSupabaseTable('bot_flows')
+        .insert(flow);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Flow saved successfully!');
+      await loadUserFlows();
+    } catch (error) {
+      console.error('Error saving flow:', error);
+      toast.error('Failed to save flow');
     }
   };
 
-  const handleSignIn = () => {
-    navigate('/auth');
+  // Update updateFlow function
+  const updateFlow = async () => {
+    try {
+      if (!selectedFlow) {
+        toast.error('No flow selected to update');
+        return;
+      }
+      
+      // Update the flow using our helper
+      const { error } = await safeSupabaseTable('bot_flows')
+        .update({
+          name: flowName,
+          flow_data: {
+            nodes: nodes,
+            edges: edges,
+            platforms: selectedPlatforms,
+          },
+          keywords: flowKeywords,
+        })
+        .eq('id', selectedFlow.id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Flow updated successfully!');
+      await loadUserFlows();
+    } catch (error) {
+      console.error('Error updating flow:', error);
+      toast.error('Failed to update flow');
+    }
   };
-
-  if (isCheckingAuth) {
-    return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Bot Flow Builder</h1>
-            <p className="text-muted-foreground">
-              Design chat flows for WhatsApp, Facebook & Instagram
-            </p>
-          </div>
-        </div>
-        
-        <Card className="text-center p-6">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>
-              Please sign in to create and manage bot flows
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">You need to be authenticated to use the Bot Flow Builder.</p>
-            <Button onClick={handleSignIn}>
-              <LogIn className="mr-2 h-4 w-4" />
-              Sign In
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Bot Flow Builder</h1>
-          <p className="text-muted-foreground">
-            Design chat flows for WhatsApp, Facebook & Instagram
-          </p>
+    <div className="container mx-auto py-6">
+      <h1 className="text-3xl font-bold mb-4">Bot Flow Builder</h1>
+
+      {/* Flow Management Section */}
+      <div className="mb-4 flex items-center space-x-4">
+        <Input
+          type="text"
+          placeholder="Enter flow name"
+          value={flowName}
+          onChange={(e) => setFlowName(e.target.value)}
+          className="flex-grow"
+        />
+
+        {/* Keywords Input */}
+        <div className="flex items-center space-x-2">
+          <Input
+            type="text"
+            placeholder="Add keywords"
+            value={keywordInput}
+            onChange={(e) => setKeywordInput(e.target.value)}
+            className="w-48"
+          />
+          <Button type="button" onClick={handleAddKeyword} size="sm">Add Keyword</Button>
         </div>
-        
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={openNewBotDialog}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Bot
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={saveFlow}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            Save Flow
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={cloneFlow}
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            Clone Flow
-          </Button>
-          <Button onClick={() => navigate('/chatbots')}>
-            Back to Chatbots
-          </Button>
+
+        {/* Display Keywords */}
+        <div className="flex items-center space-x-2">
+          {flowKeywords.map((keyword) => (
+            <div key={keyword} className="flex items-center space-x-1 bg-gray-200 rounded-full px-3 py-1 text-sm">
+              <span>{keyword}</span>
+              <Button type="button" onClick={() => handleRemoveKeyword(keyword)} size="xs">X</Button>
+            </div>
+          ))}
+        </div>
+
+				{/* Platform Selection */}
+				<div className="flex items-center space-x-2">
+					<Label>
+						<Switch
+							checked={selectedPlatforms.includes('whatsapp')}
+							onCheckedChange={() => handlePlatformChange('whatsapp')}
+						/>
+						<span>WhatsApp</span>
+					</Label>
+					<Label>
+						<Switch
+							checked={selectedPlatforms.includes('instagram')}
+							onCheckedChange={() => handlePlatformChange('instagram')}
+						/>
+						<span>Instagram</span>
+					</Label>
+					<Label>
+						<Switch
+							checked={selectedPlatforms.includes('telegram')}
+							onCheckedChange={() => handlePlatformChange('telegram')}
+						/>
+						<span>Telegram</span>
+					</Label>
+				</div>
+
+        <Button onClick={saveFlow}><Save className="mr-2 h-4 w-4" /> Save Flow</Button>
+        <Button onClick={updateFlow}>Update Flow</Button>
+        <Button onClick={() => setIsDialogOpen(true)}>Load Flow</Button>
+
+        {/* Upload and Download Buttons */}
+        <input
+          type="file"
+          id="upload-flow"
+          accept=".json"
+          onChange={handleUpload}
+          style={{ display: 'none' }}
+        />
+        <Label htmlFor="upload-flow" className="cursor-pointer">
+          <Upload className="mr-2 h-4 w-4" /> Upload Flow
+        </Label>
+        <Button onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download Flow</Button>
+      </div>
+
+      {/* Node Creation Section */}
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold mb-2">Add New Node</h2>
+        <div className="flex space-x-2">
+          <Button onClick={() => addNode('textInput')}>Text Input</Button>
+          <Button onClick={() => addNode('displayText')}>Display Text</Button>
+          <Button onClick={() => addNode('image')}>Image</Button>
+          <Button onClick={() => addNode('video')}>Video</Button>
+          <Button onClick={() => addNode('audio')}>Audio</Button>
+          <Button onClick={() => addNode('optionSelect')}>Option Select</Button>
+          <Button onClick={() => addNode('datePicker')}>Date Picker</Button>
+          <Button onClick={() => addNode('fileUpload')}>File Upload</Button>
+          <Button onClick={() => addNode('numberInput')}>Number Input</Button>
+          <Button onClick={() => addNode('emailInput')}>Email Input</Button>
+          <Button onClick={() => addNode('phoneNumberInput')}>Phone Number Input</Button>
+          <Button onClick={() => addNode('addressInput')}>Address Input</Button>
         </div>
       </div>
-      
-      <Tabs defaultValue="editor" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-5">
-          <TabsTrigger value="editor">Flow Editor</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="saved">My Bots</TabsTrigger>
-          <TabsTrigger value="keywords">Triggers</TabsTrigger>
-          <TabsTrigger value="platforms">Platforms</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="editor" className="mt-4">
-          <div className="grid grid-cols-5 gap-4">
-            <NodePalette addNode={addNode} handleAddFunctionNode={handleAddFunctionNode} />
-            
-            <Card className="col-span-4 h-[70vh]">
-              <CardHeader className="py-3 px-4 border-b flex flex-row justify-between items-center">
-                <CardTitle className="text-lg">{flowName}</CardTitle>
-                <div className="flex items-center gap-2">
-                  {selectedPlatforms.includes('whatsapp') && (
-                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">WhatsApp</span>
-                  )}
-                  {selectedPlatforms.includes('facebook') && (
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Facebook</span>
-                  )}
-                  {selectedPlatforms.includes('instagram') && (
-                    <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Instagram</span>
-                  )}
-                  {selectedPlatforms.includes('telegram') && (
-                    <span className="bg-blue-500 text-blue-800 text-xs px-2 py-1 rounded">Telegram</span>
-                  )}
-                  {selectedPlatforms.includes('website') && (
-                    <span className="bg-green-600 text-green-800 text-xs px-2 py-1 rounded">Website Widget</span>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="p-0 h-[calc(100%-60px)]">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <ReactFlow
-                    nodes={nodes}
-                    edges={edges}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                    onConnect={onConnect}
-                    nodeTypes={nodeTypes}
-                    edgeTypes={edgeTypes}
-                    connectionLineComponent={ConnectionLine}
-                    defaultEdgeOptions={{
-                      type: 'custom',
-                      animated: true
-                    }}
-                    fitView
-                  >
-                    <Controls />
-                    <MiniMap />
-                    <Background gap={16} size={1} />
-                    <Panel position="top-right" className="bg-white p-2 rounded shadow-md border">
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Plus className="h-4 w-4 mr-1" />
-                          <span>Zoom In</span>
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Minus className="h-4 w-4 mr-1" />
-                          <span>Zoom Out</span>
-                        </Button>
-                      </div>
-                    </Panel>
-                  </ReactFlow>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="templates" className="mt-4">
-          <FlowTemplateSelector 
-            templates={flowTemplates} 
-            selectedTemplate={selectedFlow}
-            onSelectTemplate={loadTemplate}
-          />
-        </TabsContent>
-        
-        <TabsContent value="saved" className="mt-4">
-          <SavedFlowsList 
-            flows={userFlows}
-            selectedFlow={selectedFlow}
-            isLoading={isLoading}
-            onLoadFlow={loadTemplate}
-            onDeleteFlow={handleDeleteFlow}
-            onCreateNew={openNewBotDialog}
-          />
-        </TabsContent>
-        
-        <TabsContent value="keywords" className="mt-4">
-          <KeywordManager 
-            keywords={triggerKeywords} 
-            onChange={handleKeywordChange} 
-          />
-        </TabsContent>
-        
-        <TabsContent value="platforms" className="mt-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Platform Selection</CardTitle>
-                  <CardDescription>
-                    Choose which platforms this bot should be active on
-                  </CardDescription>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={openPlanDetails}
-                >
-                  <Info className="h-4 w-4 mr-1" />
-                  Plan Details
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Your {currentPlan} plan allows {platformLimits.whatsapp} WhatsApp, {platformLimits.facebook} Facebook, {platformLimits.instagram} Instagram, {platformLimits.telegram} Telegram and {platformLimits.website} Website Widget accounts
-                </p>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary rounded-full transition-all" 
-                    style={{ 
-                      width: `${Math.min((selectedPlatforms.length / getTotalPlatformLimit()) * 100, 100)}%` 
-                    }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Using {selectedPlatforms.length} of {getTotalPlatformLimit() === Infinity ? '∞' : getTotalPlatformLimit()} available connections
-                </p>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-medium mb-3 flex items-center">
-                    <div className="h-4 w-4 mr-2 text-green-600 flex items-center justify-center">
-                      <span className="text-xs font-bold">W</span>
-                    </div>
-                    WhatsApp Accounts
-                  </h3>
-                  <div className="flex flex-wrap gap-3">
-                    {Array.from({ length: Math.min(platformLimits.whatsapp, 8) }, (_, i) => (
-                      <div key={`whatsapp-${i}`} className="flex flex-col gap-2 items-center">
-                        <Button 
-                          variant={selectedPlatforms.includes(`whatsapp-${i}`) ? "default" : "outline"}
-                          className={selectedPlatforms.includes(`whatsapp-${i}`) ? "bg-green-600 hover:bg-green-700" : ""}
-                          onClick={() => handlePlatformChange(`whatsapp-${i}`)}
-                        >
-                          WhatsApp {i + 1}
-                        </Button>
-                        {selectedPlatforms.includes(`whatsapp-${i}`) && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs px-2 py-0 h-7"
-                            onClick={() => openConnectDialog('whatsapp', i)}
-                          >
-                            {isAccountConnected('whatsapp', i) ? 'Reconfigure' : 'Configure connection'}
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    {currentPlan !== "Enterprise" && (
-                      <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add More
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium mb-3 flex items-center">
-                    <Facebook className="h-4 w-4 mr-2 text-blue-600" />
-                    Facebook Messenger Accounts
-                  </h3>
-                  <div className="flex flex-wrap gap-3">
-                    {Array.from({ length: Math.min(platformLimits.facebook, 8) }, (_, i) => (
-                      <div key={`facebook-${i}`} className="flex flex-col gap-2 items-center">
-                        <Button 
-                          variant={selectedPlatforms.includes(`facebook-${i}`) ? "default" : "outline"}
-                          className={selectedPlatforms.includes(`facebook-${i}`) ? "bg-blue-600 hover:bg-blue-700" : ""}
-                          onClick={() => handlePlatformChange(`facebook-${i}`)}
-                        >
-                          Facebook {i + 1}
-                        </Button>
-                        {selectedPlatforms.includes(`facebook-${i}`) && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs px-2 py-0 h-7"
-                            onClick={() => openConnectDialog('facebook', i)}
-                          >
-                            {isAccountConnected('facebook', i) ? 'Reconfigure' : 'Configure connection'}
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    {currentPlan !== "Enterprise" && (
-                      <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add More
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium mb-3 flex items-center">
-                    <Instagram className="h-4 w-4 mr-2 text-purple-600" />
-                    Instagram Accounts
-                  </h3>
-                  <div className="flex flex-wrap gap-3">
-                    {Array.from({ length: Math.min(platformLimits.instagram, 8) }, (_, i) => (
-                      <div key={`instagram-${i}`} className="flex flex-col gap-2 items-center">
-                        <Button 
-                          variant={selectedPlatforms.includes(`instagram-${i}`) ? "default" : "outline"}
-                          className={selectedPlatforms.includes(`instagram-${i}`) ? "bg-purple-600 hover:bg-purple-700" : ""}
-                          onClick={() => handlePlatformChange(`instagram-${i}`)}
-                        >
-                          Instagram {i + 1}
-                        </Button>
-                        {selectedPlatforms.includes(`instagram-${i}`) && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs px-2 py-0 h-7"
-                            onClick={() => openConnectDialog('instagram', i)}
-                          >
-                            {isAccountConnected('instagram', i) ? 'Reconfigure' : 'Configure connection'}
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    {currentPlan !== "Enterprise" && (
-                      <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add More
-                      </Button>
-                    )}
-                  </div>
-                </div>
 
-                {/* Telegram Section */}
-                <div>
-                  <h3 className="font-medium mb-3 flex items-center">
-                    <MessageSquare className="h-4 w-4 mr-2 text-blue-500" />
-                    Telegram Accounts
-                  </h3>
-                  <div className="flex flex-wrap gap-3">
-                    {Array.from({ length: Math.min(platformLimits.telegram, 8) }, (_, i) => (
-                      <div key={`telegram-${i}`} className="flex flex-col gap-2 items-center">
-                        <Button 
-                          key={`telegram-${i}`}
-                          variant={selectedPlatforms.includes(`telegram-${i}`) ? "default" : "outline"}
-                          className={selectedPlatforms.includes(`telegram-${i}`) ? "bg-blue-500 hover:bg-blue-600" : ""}
-                          onClick={() => handlePlatformChange(`telegram-${i}`)}
-                        >
-                          Telegram {i + 1}
-                        </Button>
-                        {selectedPlatforms.includes(`telegram-${i}`) && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs px-2 py-0 h-7"
-                            onClick={() => openConnectDialog('telegram', i)}
-                          >
-                            {isAccountConnected('telegram', i) ? 'Reconfigure' : 'Configure connection'}
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    {currentPlan !== "Enterprise" && (
-                      <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add More
-                      </Button>
-                    )}
-                  </div>
-                </div>
+      {/* React Flow Component */}
+      <div style={{ width: width ? width * 0.95 : '100%', height: height ? height * 0.7 : '600px', border: '1px solid #ccc', borderRadius: '5px' }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+					fitView
+        >
+          <Controls />
+          <MiniMap />
+          <Background variant="dots" gap={12} size={1} />
+        </ReactFlow>
+      </div>
 
-                {/* Website Widget Section */}
-                <div>
-                  <h3 className="font-medium mb-3 flex items-center">
-                    <Globe className="h-4 w-4 mr-2 text-green-600" />
-                    Website Widget
-                  </h3>
-                  <div className="flex flex-wrap gap-3">
-                    {Array.from({ length: Math.min(platformLimits.website, 8) }, (_, i) => (
-                      <div key={`website-${i}`} className="flex flex-col gap-2 items-center">
-                        <Button 
-                          variant={selectedPlatforms.includes(`website-${i}`) ? "default" : "outline"}
-                          className={selectedPlatforms.includes(`website-${i}`) ? "bg-green-600 hover:bg-green-700" : ""}
-                          onClick={() => handlePlatformChange(`website-${i}`)}
-                        >
-                          Widget {i + 1}
-                        </Button>
-                        {selectedPlatforms.includes(`website-${i}`) && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs px-2 py-0 h-7"
-                            onClick={() => openConnectDialog('website', i)}
-                          >
-                            {isAccountConnected('website', i) ? 'Reconfigure' : 'Configure connection'}
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    {currentPlan !== "Enterprise" && (
-                      <Button variant="outline" className="border-dashed" onClick={openPlanDetails}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add More
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Save Dialog */}
-      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
-        <DialogContent>
+      {/* Load Flow Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Save Bot Flow</DialogTitle>
+            <DialogTitle>Load Existing Flow</DialogTitle>
             <DialogDescription>
-              Give your bot flow a name to save it
+              Select a flow from the list below to load it into the builder.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="flow-name">Bot Flow Name</Label>
-            <Input
-              id="flow-name"
-              value={flowName}
-              onChange={(e) => setFlowName(e.target.value)}
-              placeholder="Enter a name for your bot flow"
-              className="mt-2"
-            />
+          <div>
+            {isLoading ? (
+              <p>Loading flows...</p>
+            ) : (
+              <Select onValueChange={(value) => setSelectedFlow(availableFlows.find(flow => flow.id === value) || null)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a flow" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFlows.map((flow) => (
+                    <SelectItem key={flow.id} value={flow.id}>{flow.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
             <Button
-              variant="outline"
-              onClick={() => setSaveDialogOpen(false)}
+              type="button"
+              onClick={() => {
+                if (selectedFlow) {
+                  loadFlow(selectedFlow.id);
+                } else {
+                  toast.error('No flow selected');
+                }
+              }}
+              disabled={!selectedFlow}
             >
-              Cancel
-            </Button>
-            <Button 
-              onClick={() => saveFlowToDb()}
-              disabled={!flowName.trim() || isSaving}
-            >
-              {isSaving ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              Save
+              Load Flow
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* New Bot Dialog */}
-      <Dialog open={newBotDialogOpen} onOpenChange={setNewBotDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Bot</DialogTitle>
-            <DialogDescription>
-              Start building a new bot flow from scratch
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="new-bot-name">Bot Name</Label>
-            <Input
-              id="new-bot-name"
-              value={newBotName}
-              onChange={(e) => setNewBotName(e.target.value)}
-              placeholder="Enter a name for your new bot"
-              className="mt-2"
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setNewBotDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={createNewBot}
-              disabled={!newBotName.trim()}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the bot flow
-              "{flowToDelete?.name}".
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteFlow}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="mr-2 h-4 w-4" />
-              )}
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Function Dialog */}
-      <Dialog open={functionDialogOpen} onOpenChange={setFunctionDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Create Function Node</DialogTitle>
-            <DialogDescription>
-              Add JavaScript code to process data in your flow
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div>
-              <Label htmlFor="function-name">Function Name</Label>
-              <Input
-                id="function-name"
-                value={functionName}
-                onChange={(e) => setFunctionName(e.target.value)}
-                placeholder="Enter a name for your function"
-                className="mt-2"
-              />
-            </div>
-            <div>
-              <Label htmlFor="function-code">JavaScript Code</Label>
-              <Textarea
-                id="function-code"
-                value={functionCode}
-                onChange={(e) => setFunctionCode(e.target.value)}
-                placeholder="function process(input) {\n  // Your code here\n  return input;\n}"
-                className="mt-2 font-mono h-56"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setFunctionDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={createFunctionNode}
-              disabled={!functionName.trim() || !functionCode.trim()}
-            >
-              <Code className="mr-2 h-4 w-4" />
-              Add Function
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Plan Details Modal */}
-      <PlanDetailsModal 
-        isOpen={planDetailsOpen}
-        onClose={() => setPlanDetailsOpen(false)}
-        currentPlan={currentPlan}
-      />
-
-      {/* Platform Connect Dialog */}
-      <PlatformConnectDialog
-        open={connectDialogOpen}
-        onOpenChange={setConnectDialogOpen}
-        platformType={connectingPlatform}
-        accountIndex={connectingAccountIndex}
-        onSuccess={handleConnectionSuccess}
-      />
     </div>
   );
 };
