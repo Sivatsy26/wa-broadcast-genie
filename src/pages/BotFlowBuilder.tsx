@@ -16,7 +16,6 @@ import '@xyflow/react/dist/style.css';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -48,6 +47,17 @@ import { downloadAsJson, uploadFromJson } from '@/utils/flowUtils';
 // Import our new helper
 import { safeSupabaseTable, getTableData, ensureTableExists } from "@/utils/supabaseHelpers";
 
+interface FlowData {
+  id: string;
+  name: string;
+  keywords?: string[];
+  flow_data?: {
+    nodes?: Node[];
+    edges?: Edge[];
+    platforms?: string[];
+  };
+}
+
 const BotFlowBuilder = () => {
   const { width, height } = useWindowSize();
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
@@ -56,7 +66,7 @@ const BotFlowBuilder = () => {
   const [flowName, setFlowName] = useState('');
   const [flowKeywords, setFlowKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState('');
-	const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFlow, setSelectedFlow] = useState<{ id: string; name: string } | null>(null);
@@ -73,12 +83,12 @@ const BotFlowBuilder = () => {
   );
 
   const handlePlatformChange = (platform: string) => {
-		setSelectedPlatforms((prevPlatforms) =>
-			prevPlatforms.includes(platform)
-				? prevPlatforms.filter((p) => p !== platform)
-				: [...prevPlatforms, platform]
-		);
-	};
+	setSelectedPlatforms((prevPlatforms) =>
+		prevPlatforms.includes(platform)
+			? prevPlatforms.filter((p) => p !== platform)
+			: [...prevPlatforms, platform]
+	);
+  };
 
   const addNode = (type: string) => {
     const id = uuidv4();
@@ -128,7 +138,7 @@ const BotFlowBuilder = () => {
       
       if (data) {
         // Process the flow data
-        const flows = data.map((flow: any) => ({
+        const flows = (data as FlowData[]).map((flow) => ({
           id: flow.id,
           name: flow.name,
         }));
@@ -162,7 +172,7 @@ const BotFlowBuilder = () => {
       }
       
       if (data && data.length > 0) {
-        const flowData = data[0];
+        const flowData = data[0] as FlowData;
         setFlowName(flowData.name);
         setFlowKeywords(flowData.keywords || []);
         setSelectedPlatforms(flowData.flow_data?.platforms || []);

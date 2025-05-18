@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -41,7 +40,7 @@ const ChatbotSettings: React.FC<ChatbotSettingsProps> = ({ chatbot, open, onClos
       welcome_message: chatbot.welcome_message,
       primary_color: chatbot.primary_color,
       show_avatar: chatbot.show_avatar,
-      channels: chatbot.channels,
+      channels: chatbot.channels || [],
       system_prompt: chatbot.system_prompt || 'You are a helpful customer support assistant. Be polite, concise, and helpful. If you don\'t know the answer to something, suggest the user contact our support team.',
       ai_model: chatbot.ai_model || 'gpt-4',
       temperature: chatbot.temperature || 0.7,
@@ -181,7 +180,7 @@ const ChatbotSettings: React.FC<ChatbotSettingsProps> = ({ chatbot, open, onClos
                   <div className="flex flex-wrap gap-3 mt-2">
                     <Button
                       type="button"
-                      variant={form.getValues('channels').includes('whatsapp') ? 'default' : 'outline'}
+                      variant={form.getValues('channels')?.includes('whatsapp') ? 'default' : 'outline'}
                       onClick={() => toggleChannel('whatsapp')}
                       className="flex items-center gap-2"
                     >
@@ -190,7 +189,7 @@ const ChatbotSettings: React.FC<ChatbotSettingsProps> = ({ chatbot, open, onClos
                     </Button>
                     <Button
                       type="button"
-                      variant={form.getValues('channels').includes('facebook') ? 'default' : 'outline'}
+                      variant={form.getValues('channels')?.includes('facebook') ? 'default' : 'outline'}
                       onClick={() => toggleChannel('facebook')}
                       className="flex items-center gap-2"
                     >
@@ -199,7 +198,7 @@ const ChatbotSettings: React.FC<ChatbotSettingsProps> = ({ chatbot, open, onClos
                     </Button>
                     <Button
                       type="button"
-                      variant={form.getValues('channels').includes('website') ? 'default' : 'outline'}
+                      variant={form.getValues('channels')?.includes('website') ? 'default' : 'outline'}
                       onClick={() => toggleChannel('website')}
                       className="flex items-center gap-2"
                     >
@@ -388,7 +387,7 @@ const ChatbotSettings: React.FC<ChatbotSettingsProps> = ({ chatbot, open, onClos
                           <Button
                             key={day}
                             type="button"
-                            variant={form.getValues('business_days').includes(day) ? 'default' : 'outline'}
+                            variant={form.getValues('business_days')?.includes(day) ? 'default' : 'outline'}
                             size="sm"
                             className="w-full capitalize"
                             onClick={() => toggleBusinessDay(day)}

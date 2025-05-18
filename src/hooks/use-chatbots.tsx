@@ -15,7 +15,8 @@ import {
   deleteChatbotResponse,
   fetchChatbotAnalytics,
   type Chatbot,
-  type ChatbotResponse
+  type ChatbotResponse,
+  type ChatbotAnalyticsData
 } from '@/services/chatbotService';
 import { useToast } from '@/hooks/use-toast';
 
