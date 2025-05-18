@@ -9,6 +9,7 @@ export interface Lead {
   avatar?: string;
   street?: string;
   city?: string;
+  district?: string;
   state?: string;
   country?: string;
   postalCode?: string;
@@ -32,9 +33,12 @@ export interface Client {
   avatar?: string;
   street?: string;
   city?: string;
+  district?: string;
   state?: string;
   country?: string;
   postalCode?: string;
+  source?: string;
+  status?: string;
   plan: 'starter' | 'professional' | 'enterprise';
   referredBy?: string;
   notes?: string;
