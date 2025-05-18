@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -118,6 +119,9 @@ const CustomerDetailsModal: React.FC<CustomerDetailsProps> = ({
             <DialogTitle>
               {customerType === 'lead' ? 'Lead Details' : 'Client Details'}
             </DialogTitle>
+            <DialogDescription>
+              View and manage {customerType === 'lead' ? 'lead' : 'client'} details
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-6 py-4">
@@ -270,7 +274,7 @@ const CustomerDetailsModal: React.FC<CustomerDetailsProps> = ({
               <Button variant="destructive" onClick={onDelete}>
                 Delete
               </Button>
-              {customerType === 'lead' && onConvertToClient && (
+              {customerType === 'lead' && onConvertToClient && customerData.status !== 'converted' && (
                 <Button variant="outline" className="ml-2" onClick={() => setConvertDialogOpen(true)}>
                   Convert to Client
                 </Button>

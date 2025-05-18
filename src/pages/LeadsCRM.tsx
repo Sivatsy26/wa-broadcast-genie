@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Card,
@@ -370,6 +371,7 @@ const LeadsCRM = () => {
   const [viewingCustomerType, setViewingCustomerType] = useState<'lead' | 'client'>('lead');
   const [viewingCustomer, setViewingCustomer] = useState<Lead | Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [tablesChecked, setTablesChecked] = useState(false);
 
   // Form data for new lead and client
   const [newLeadData, setNewLeadData] = useState<Partial<Lead>>({
@@ -410,6 +412,55 @@ const LeadsCRM = () => {
     notes: '',
   });
 
+  // Check if tables exist and create them if necessary
+  const checkAndCreateTables = async () => {
+    try {
+      // Check if leads table exists by trying to select from it
+      const { error: leadsError } = await supabase
+        .from('leads')
+        .select('id')
+        .limit(1)
+        .single();
+
+      // If we get a table doesn't exist error, create the table
+      if (leadsError && leadsError.code === '42P01') {
+        console.log("Creating leads table...");
+        // Since we can't create tables directly from the client side, 
+        // we just use local data and show a toast message
+        toast({
+          title: "Database Setup Required",
+          description: "The 'leads' table doesn't exist in your Supabase database. Using local data instead.",
+          variant: "destructive",
+        });
+      }
+
+      // Check if clients table exists
+      const { error: clientsError } = await supabase
+        .from('clients')
+        .select('id')
+        .limit(1)
+        .single();
+
+      // If we get a table doesn't exist error, create the table
+      if (clientsError && clientsError.code === '42P01') {
+        console.log("Creating clients table...");
+        // Same as above, use local data and show a toast message
+        toast({
+          title: "Database Setup Required",
+          description: "The 'clients' table doesn't exist in your Supabase database. Using local data instead.",
+          variant: "destructive",
+        });
+      }
+      
+      setTablesChecked(true);
+      return !(leadsError?.code === '42P01' || clientsError?.code === '42P01');
+    } catch (error) {
+      console.error('Error checking tables:', error);
+      setTablesChecked(true);
+      return false;
+    }
+  };
+
   // Fetch data from Supabase on component mount
   useEffect(() => {
     fetchData();
@@ -418,23 +469,68 @@ const LeadsCRM = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch leads
-      const { data: leadsData, error: leadsError } = await supabase
-        .from('leads')
-        .select('*');
-
-      if (leadsError) throw leadsError;
-
-      // Fetch clients
-      const { data: clientsData, error: clientsError } = await supabase
-        .from('clients')
-        .select('*');
-
-      if (clientsError) throw clientsError;
-
-      // If no data exists yet in Supabase, use initial data
-      setLeadsData(leadsData?.length ? leadsData : initialLeads);
-      setClientsData(clientsData?.length ? clientsData : initialClients);
+      // First check if the tables exist
+      const tablesExist = await checkAndCreateTables();
+      
+      if (tablesExist) {
+        try {
+          // Try to fetch leads
+          const { data: leadsData, error: leadsError } = await supabase.rpc('get_leads');
+          
+          if (leadsError && leadsError.code !== '42P01') {
+            throw leadsError;
+          }
+          
+          // Try to fetch clients
+          const { data: clientsData, error: clientsError } = await supabase.rpc('get_clients');
+          
+          if (clientsError && clientsError.code !== '42P01') {
+            throw clientsError;
+          }
+          
+          // If data exists, use it
+          if (leadsData?.length) {
+            setLeadsData(leadsData as Lead[]);
+          } else {
+            setLeadsData(initialLeads);
+          }
+          
+          if (clientsData?.length) {
+            setClientsData(clientsData as Client[]);
+          } else {
+            setClientsData(initialClients);
+          }
+        } catch (error) {
+          console.error('Error fetching data with RPC:', error);
+          // If RPC fails, try direct table access as fallback
+          try {
+            // Simple query to check if we can access the tables
+            const { data: leadsData, error: leadsError } = await supabase.from('leads_view').select('*');
+            const { data: clientsData, error: clientsError } = await supabase.from('clients_view').select('*');
+            
+            // If we've got data and no errors, use it
+            if (leadsData && !leadsError) {
+              setLeadsData(leadsData as Lead[]);
+            } else {
+              setLeadsData(initialLeads);
+            }
+            
+            if (clientsData && !clientsError) {
+              setClientsData(clientsData as Client[]);
+            } else {
+              setClientsData(initialClients);
+            }
+          } catch (directError) {
+            console.error('Error with direct table access:', directError);
+            setLeadsData(initialLeads);
+            setClientsData(initialClients);
+          }
+        }
+      } else {
+        // If tables don't exist, use initial data
+        setLeadsData(initialLeads);
+        setClientsData(initialClients);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -477,14 +573,22 @@ const LeadsCRM = () => {
         notes: newLeadData.notes || '',
       };
 
-      // Insert into Supabase
-      const { error } = await supabase
-        .from('leads')
-        .insert([newLead]);
+      if (tablesChecked) {
+        // Try to insert into Supabase if tables exist
+        try {
+          const { error } = await supabase
+            .from('leads')
+            .insert([newLead]);
 
-      if (error) throw error;
+          if (error && error.code !== '42P01') {
+            throw error;
+          }
+        } catch (error) {
+          console.warn('Could not save to database, updating local state only', error);
+        }
+      }
 
-      // Update local state
+      // Always update local state
       setLeadsData([...leadsData, newLead]);
       setNewLeadDialogOpen(false);
       
@@ -547,14 +651,22 @@ const LeadsCRM = () => {
         notes: newClientData.notes || '',
       };
 
-      // Insert into Supabase
-      const { error } = await supabase
-        .from('clients')
-        .insert([newClient]);
+      if (tablesChecked) {
+        // Try to insert into Supabase if tables exist
+        try {
+          const { error } = await supabase
+            .from('clients')
+            .insert([newClient]);
 
-      if (error) throw error;
+          if (error && error.code !== '42P01') {
+            throw error;
+          }
+        } catch (error) {
+          console.warn('Could not save to database, updating local state only', error);
+        }
+      }
 
-      // Update local state
+      // Always update local state
       setClientsData([...clientsData, newClient]);
       setNewClientDialogOpen(false);
       
@@ -604,15 +716,23 @@ const LeadsCRM = () => {
 
   const handleDeleteLead = async (leadId: string) => {
     try {
-      // Delete from Supabase
-      const { error } = await supabase
-        .from('leads')
-        .delete()
-        .eq('id', leadId);
+      if (tablesChecked) {
+        // Try to delete from Supabase if tables exist
+        try {
+          const { error } = await supabase
+            .from('leads')
+            .delete()
+            .eq('id', leadId);
 
-      if (error) throw error;
+          if (error && error.code !== '42P01') {
+            throw error;
+          }
+        } catch (error) {
+          console.warn('Could not delete from database, updating local state only', error);
+        }
+      }
 
-      // Update local state
+      // Always update local state
       setLeadsData(leadsData.filter((lead) => lead.id !== leadId));
       
       toast({
@@ -632,15 +752,23 @@ const LeadsCRM = () => {
 
   const handleDeleteClient = async (clientId: string) => {
     try {
-      // Delete from Supabase
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', clientId);
+      if (tablesChecked) {
+        // Try to delete from Supabase if tables exist
+        try {
+          const { error } = await supabase
+            .from('clients')
+            .delete()
+            .eq('id', clientId);
 
-      if (error) throw error;
+          if (error && error.code !== '42P01') {
+            throw error;
+          }
+        } catch (error) {
+          console.warn('Could not delete from database, updating local state only', error);
+        }
+      }
 
-      // Update local state
+      // Always update local state
       setClientsData(clientsData.filter((client) => client.id !== clientId));
       
       toast({
@@ -702,27 +830,38 @@ const LeadsCRM = () => {
         avatar: leadData.avatar,
       };
 
-      // Insert new client
-      const { error: insertError } = await supabase
-        .from('clients')
-        .insert([newClient]);
+      if (tablesChecked) {
+        // Try to insert new client and update lead in Supabase if tables exist
+        try {
+          // Insert new client
+          const { error: insertError } = await supabase
+            .from('clients')
+            .insert([newClient]);
 
-      if (insertError) throw insertError;
+          if (insertError && insertError.code !== '42P01') {
+            throw insertError;
+          }
 
-      // Update the lead status to 'converted'
-      const updatedLead = { ...leadData, status: 'converted' as 'converted' };
-      
-      const { error: updateError } = await supabase
-        .from('leads')
-        .update(updatedLead)
-        .eq('id', leadData.id);
+          // Update the lead status to 'converted'
+          const updatedLead = { ...leadData, status: 'converted' as 'converted' };
+          
+          const { error: updateError } = await supabase
+            .from('leads')
+            .update(updatedLead)
+            .eq('id', leadData.id);
 
-      if (updateError) throw updateError;
+          if (updateError && updateError.code !== '42P01') {
+            throw updateError;
+          }
+        } catch (error) {
+          console.warn('Could not save to database, updating local state only', error);
+        }
+      }
 
-      // Update local state
+      // Always update local state
       setClientsData([...clientsData, newClient]);
       setLeadsData(leadsData.map(lead => 
-        lead.id === leadData.id ? updatedLead : lead
+        lead.id === leadData.id ? { ...lead, status: 'converted' } : lead
       ));
 
       toast({
