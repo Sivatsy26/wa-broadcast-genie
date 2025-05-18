@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import ReactFlow, {
+import {
+  ReactFlow,
   addEdge,
   useNodesState,
   useEdgesState,
@@ -9,8 +11,8 @@ import ReactFlow, {
   Node,
   Edge,
   useReactFlow,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -30,19 +32,9 @@ import {
 
 import { v4 as uuidv4 } from 'uuid';
 
-// Custom node types
+// Custom node types - We're adding just the TextInputNode for now, 
+// the rest will be placeholders until fully implemented
 import TextInputNode from '@/components/nodes/TextInputNode';
-import DisplayTextNode from '@/components/nodes/DisplayTextNode';
-import ImageNode from '@/components/nodes/ImageNode';
-import VideoNode from '@/components/nodes/VideoNode';
-import AudioNode from '@/components/nodes/AudioNode';
-import OptionSelectNode from '@/components/nodes/OptionSelectNode';
-import DatePickerNode from '@/components/nodes/DatePickerNode';
-import FileUploadNode from '@/components/nodes/FileUploadNode';
-import NumberInputNode from '@/components/nodes/NumberInputNode';
-import EmailInputNode from '@/components/nodes/EmailInputNode';
-import PhoneNumberInputNode from '@/components/nodes/PhoneNumberInputNode';
-import AddressInputNode from '@/components/nodes/AddressInputNode';
 
 // Layout
 import { useWindowSize } from '@uidotdev/usehooks';
@@ -70,19 +62,9 @@ const BotFlowBuilder = () => {
   const [selectedFlow, setSelectedFlow] = useState<{ id: string; name: string } | null>(null);
   const [availableFlows, setAvailableFlows] = useState<{ id: string; name: string }[]>([]);
 
+  // For now, only include TextInputNode, we'll add the other node types as needed
   const nodeTypes = {
     textInput: TextInputNode,
-    displayText: DisplayTextNode,
-    image: ImageNode,
-    video: VideoNode,
-    audio: AudioNode,
-    optionSelect: OptionSelectNode,
-    datePicker: DatePickerNode,
-    fileUpload: FileUploadNode,
-    numberInput: NumberInputNode,
-    emailInput: EmailInputNode,
-    phoneNumberInput: PhoneNumberInputNode,
-    addressInput: AddressInputNode,
   };
 
   const onConnect = useCallback(
@@ -146,7 +128,7 @@ const BotFlowBuilder = () => {
       
       if (data) {
         // Process the flow data
-        const flows = data.map((flow) => ({
+        const flows = data.map((flow: any) => ({
           id: flow.id,
           name: flow.name,
         }));
@@ -192,13 +174,13 @@ const BotFlowBuilder = () => {
           setEdges(loadedEdges || []);
         } else {
           console.warn('Flow data is missing or malformed.');
-          toast.warn('Flow data is missing or malformed.');
+          toast.warning('Flow data is missing or malformed.');
           setNodes([]);
           setEdges([]);
         }
       } else {
         console.warn('Flow not found.');
-        toast.warn('Flow not found.');
+        toast.warning('Flow not found.');
         setNodes([]);
         setEdges([]);
       }
@@ -314,28 +296,36 @@ const BotFlowBuilder = () => {
           {flowKeywords.map((keyword) => (
             <div key={keyword} className="flex items-center space-x-1 bg-gray-200 rounded-full px-3 py-1 text-sm">
               <span>{keyword}</span>
-              <Button type="button" onClick={() => handleRemoveKeyword(keyword)} size="xs">X</Button>
+              <Button 
+                type="button" 
+                onClick={() => handleRemoveKeyword(keyword)} 
+                variant="ghost" 
+                size="sm"
+                className="h-4 w-4 p-0 text-xs"
+              >
+                X
+              </Button>
             </div>
           ))}
         </div>
 
 				{/* Platform Selection */}
 				<div className="flex items-center space-x-2">
-					<Label>
+					<Label className="flex items-center space-x-2">
 						<Switch
 							checked={selectedPlatforms.includes('whatsapp')}
 							onCheckedChange={() => handlePlatformChange('whatsapp')}
 						/>
 						<span>WhatsApp</span>
 					</Label>
-					<Label>
+					<Label className="flex items-center space-x-2">
 						<Switch
 							checked={selectedPlatforms.includes('instagram')}
 							onCheckedChange={() => handlePlatformChange('instagram')}
 						/>
 						<span>Instagram</span>
 					</Label>
-					<Label>
+					<Label className="flex items-center space-x-2">
 						<Switch
 							checked={selectedPlatforms.includes('telegram')}
 							onCheckedChange={() => handlePlatformChange('telegram')}
@@ -367,17 +357,6 @@ const BotFlowBuilder = () => {
         <h2 className="text-xl font-semibold mb-2">Add New Node</h2>
         <div className="flex space-x-2">
           <Button onClick={() => addNode('textInput')}>Text Input</Button>
-          <Button onClick={() => addNode('displayText')}>Display Text</Button>
-          <Button onClick={() => addNode('image')}>Image</Button>
-          <Button onClick={() => addNode('video')}>Video</Button>
-          <Button onClick={() => addNode('audio')}>Audio</Button>
-          <Button onClick={() => addNode('optionSelect')}>Option Select</Button>
-          <Button onClick={() => addNode('datePicker')}>Date Picker</Button>
-          <Button onClick={() => addNode('fileUpload')}>File Upload</Button>
-          <Button onClick={() => addNode('numberInput')}>Number Input</Button>
-          <Button onClick={() => addNode('emailInput')}>Email Input</Button>
-          <Button onClick={() => addNode('phoneNumberInput')}>Phone Number Input</Button>
-          <Button onClick={() => addNode('addressInput')}>Address Input</Button>
         </div>
       </div>
 
