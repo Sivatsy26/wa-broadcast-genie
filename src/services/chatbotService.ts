@@ -92,7 +92,7 @@ export const fetchChatbots = async (): Promise<Chatbot[]> => {
       return mockChatbots;
     }
 
-    return data as Chatbot[] || mockChatbots;
+    return (data as Chatbot[]) || mockChatbots;
   } catch (error) {
     console.error("Error in fetchChatbots:", error);
     return mockChatbots;
@@ -121,7 +121,11 @@ export const fetchChatbot = async (id: string): Promise<Chatbot | null> => {
       return mockChatbots.find(bot => bot.id === id) || null;
     }
 
-    return (data && data.length > 0) ? data[0] as Chatbot : null;
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      return null;
+    }
+
+    return (Array.isArray(data) ? data[0] : data) as Chatbot;
   } catch (error) {
     console.error("Error in fetchChatbotById:", error);
     return mockChatbots.find(bot => bot.id === id) || null;
@@ -150,8 +154,12 @@ export const createChatbot = async (chatbot: Partial<Chatbot>): Promise<Chatbot 
       return null;
     }
 
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      return null;
+    }
+
     toast.success("Chatbot created successfully!");
-    return data && data.length > 0 ? data[0] as Chatbot : null;
+    return (Array.isArray(data) ? data[0] : data) as Chatbot;
   } catch (error) {
     console.error("Error in createChatbot:", error);
     toast.error("Failed to create chatbot due to an unexpected error");
@@ -182,8 +190,12 @@ export const updateChatbot = async (id: string, updates: Partial<Chatbot>): Prom
       return null;
     }
 
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      return null;
+    }
+
     toast.success("Chatbot updated successfully!");
-    return data && data.length > 0 ? data[0] as Chatbot : null;
+    return (Array.isArray(data) ? data[0] : data) as Chatbot;
   } catch (error) {
     console.error("Error in updateChatbot:", error);
     toast.error("Failed to update chatbot due to an unexpected error");
@@ -299,7 +311,7 @@ export const fetchChatbotResponses = async (chatbotId: string): Promise<ChatbotR
       return mockResponses.filter(r => r.chatbot_id === chatbotId);
     }
 
-    return data as ChatbotResponse[] || mockResponses.filter(r => r.chatbot_id === chatbotId);
+    return (data as ChatbotResponse[]) || mockResponses.filter(r => r.chatbot_id === chatbotId);
   } catch (error) {
     console.error("Error in fetchChatbotResponses:", error);
     return mockResponses.filter(r => r.chatbot_id === chatbotId);
@@ -328,7 +340,11 @@ export const createChatbotResponse = async (response: Partial<ChatbotResponse>):
       return null;
     }
 
-    return data && data.length > 0 ? data[0] as ChatbotResponse : null;
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      return null;
+    }
+
+    return (Array.isArray(data) ? data[0] : data) as ChatbotResponse;
   } catch (error) {
     console.error("Error in createChatbotResponse:", error);
     toast.error("Failed to create response");
@@ -359,7 +375,11 @@ export const updateChatbotResponse = async (id: string, data: Partial<ChatbotRes
       return null;
     }
 
-    return responseData && responseData.length > 0 ? responseData[0] as ChatbotResponse : null;
+    if (!responseData || (Array.isArray(responseData) && responseData.length === 0)) {
+      return null;
+    }
+
+    return (Array.isArray(responseData) ? responseData[0] : responseData) as ChatbotResponse;
   } catch (error) {
     console.error("Error in updateChatbotResponse:", error);
     toast.error("Failed to update response");

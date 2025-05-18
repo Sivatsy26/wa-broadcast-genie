@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ReactFlow,
@@ -379,7 +378,7 @@ const BotFlowBuilder = () => {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
-					fitView
+          fitView
         >
           <Controls />
           <MiniMap />

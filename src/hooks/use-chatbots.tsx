@@ -93,7 +93,7 @@ export const useChatbots = () => {
     }
   });
 
-  // Update chatbot status - Fixed this to pass just the params object
+  // Update chatbot status
   const updateChatbotStatusMutation = useMutation({
     mutationFn: (params: { id: string, status: 'active' | 'draft' | 'paused' }) => updateChatbotStatus(params),
     onSuccess: (_, variables) => {
