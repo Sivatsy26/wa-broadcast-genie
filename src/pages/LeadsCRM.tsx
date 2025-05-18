@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Tabs, 
@@ -33,13 +32,21 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Plus, Search, Users, FileSpreadsheet, Phone, Mail, Calendar } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 import CustomerDetailsModal from "@/components/CustomerDetailsModal";
-import { createTableIfNotExists, safeSupabaseOperation } from "@/utils/supabaseUtils";
+import { 
+  createTableIfNotExists, 
+  fetchLeadsData, 
+  fetchClientsData,
+  addLeadToSupabase,
+  addClientToSupabase,
+  deleteLeadFromSupabase,
+  deleteClientFromSupabase,
+  updateLeadInSupabase
+} from "@/utils/supabaseUtils";
 import { Lead, Client } from "@/types/customer"; 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const LeadsCRM = () => {
   const [activeTab, setActiveTab] = useState("leads");
@@ -145,16 +152,16 @@ const LeadsCRM = () => {
 
   useEffect(() => {
     const initializeApp = async () => {
-      console.info('Creating leads table...');
-      const leadsTableExists = await createTableIfNotExists('leads', {
+      console.info('Checking if leads table exists...');
+      await createTableIfNotExists('leads', {
         id: 'uuid primary key',
         name: 'text not null',
         company: 'text',
         // Add other fields as needed
       });
 
-      console.info('Creating clients table...');
-      const clientsTableExists = await createTableIfNotExists('clients', {
+      console.info('Checking if clients table exists...');
+      await createTableIfNotExists('clients', {
         id: 'uuid primary key',
         customerId: 'text not null',
         name: 'text not null',
@@ -170,19 +177,12 @@ const LeadsCRM = () => {
   }, []);
 
   const fetchData = async () => {
-    // Try to get data from Supabase, but fall back to mock data if tables don't exist
-    const leadsData = await safeSupabaseOperation(
-      async () => await supabase.from('leads').select('*'),
-      mockLeads
-    );
-    
-    const clientsData = await safeSupabaseOperation(
-      async () => await supabase.from('clients').select('*'),
-      mockClients
-    );
+    // Use our utility functions to fetch data and handle fallbacks
+    const leadsData = await fetchLeadsData(mockLeads);
+    const clientsData = await fetchClientsData(mockClients);
 
-    setLeads(leadsData as Lead[]);
-    setClients(clientsData as Client[]);
+    setLeads(leadsData);
+    setClients(clientsData);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -214,19 +214,8 @@ const LeadsCRM = () => {
           nextFollowUp: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week from now
         };
 
-        try {
-          // Try to insert into Supabase, but handle gracefully if the table doesn't exist
-          const { error } = await supabase.from('leads').insert([newLead]);
-          if (error) {
-            if (error.message.includes('does not exist') || error.code === '42P01') {
-              console.warn("Leads table doesn't exist, using local storage only");
-            } else {
-              throw error;
-            }
-          }
-        } catch (error) {
-          console.error("Error adding lead to Supabase:", error);
-        }
+        // Try to add to Supabase
+        await addLeadToSupabase(newLead);
 
         // Update local state regardless of Supabase operation result
         setLeads([...leads, newLead]);
@@ -250,19 +239,8 @@ const LeadsCRM = () => {
           renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
         };
 
-        try {
-          // Try to insert into Supabase, but handle gracefully if the table doesn't exist
-          const { error } = await supabase.from('clients').insert([newClient]);
-          if (error) {
-            if (error.message.includes('does not exist') || error.code === '42P01') {
-              console.warn("Clients table doesn't exist, using local storage only");
-            } else {
-              throw error;
-            }
-          }
-        } catch (error) {
-          console.error("Error adding client to Supabase:", error);
-        }
+        // Try to add to Supabase
+        await addClientToSupabase(newClient);
 
         // Update local state regardless of Supabase operation result
         setClients([...clients, newClient]);
@@ -299,19 +277,8 @@ const LeadsCRM = () => {
       if (activeTab === "leads") {
         const leadToDelete = selectedCustomer as Lead;
         
-        try {
-          // Try to delete from Supabase, but handle gracefully if the table doesn't exist
-          const { error } = await supabase.from('leads').delete().eq('id', leadToDelete.id);
-          if (error) {
-            if (error.message.includes('does not exist') || error.code === '42P01') {
-              console.warn("Leads table doesn't exist, using local storage only");
-            } else {
-              throw error;
-            }
-          }
-        } catch (error) {
-          console.error("Error deleting lead from Supabase:", error);
-        }
+        // Try to delete from Supabase
+        await deleteLeadFromSupabase(leadToDelete.id);
 
         // Update local state regardless of Supabase operation result
         setLeads(leads.filter(lead => lead.id !== leadToDelete.id));
@@ -319,19 +286,8 @@ const LeadsCRM = () => {
       } else {
         const clientToDelete = selectedCustomer as Client;
         
-        try {
-          // Try to delete from Supabase, but handle gracefully if the table doesn't exist
-          const { error } = await supabase.from('clients').delete().eq('id', clientToDelete.id);
-          if (error) {
-            if (error.message.includes('does not exist') || error.code === '42P01') {
-              console.warn("Clients table doesn't exist, using local storage only");
-            } else {
-              throw error;
-            }
-          }
-        } catch (error) {
-          console.error("Error deleting client from Supabase:", error);
-        }
+        // Try to delete from Supabase
+        await deleteClientFromSupabase(clientToDelete.id);
 
         // Update local state regardless of Supabase operation result
         setClients(clients.filter(client => client.id !== clientToDelete.id));
@@ -379,33 +335,11 @@ const LeadsCRM = () => {
         status: 'converted'
       };
 
-      try {
-        // Try to update the lead in Supabase
-        const { error: updateError } = await supabase
-          .from('leads')
-          .update({ status: 'converted' })
-          .eq('id', leadData.id);
-        
-        if (updateError) {
-          if (updateError.message.includes('does not exist') || updateError.code === '42P01') {
-            console.warn("Leads table doesn't exist, using local storage only");
-          } else {
-            throw updateError;
-          }
-        }
-
-        // Try to insert the new client in Supabase
-        const { error: insertError } = await supabase.from('clients').insert([newClient]);
-        if (insertError) {
-          if (insertError.message.includes('does not exist') || insertError.code === '42P01') {
-            console.warn("Clients table doesn't exist, using local storage only");
-          } else {
-            throw insertError;
-          }
-        }
-      } catch (error) {
-        console.error("Error with Supabase operations:", error);
-      }
+      // Try to update lead in Supabase
+      await updateLeadInSupabase(updatedLead);
+      
+      // Try to add new client to Supabase
+      await addClientToSupabase(newClient);
 
       // Update local state
       setLeads(leads.map(lead => lead.id === leadData.id ? updatedLead : lead));
