@@ -8,11 +8,12 @@ import { Lead, Client } from "@/types/customer";
  */
 export const checkTableExists = async (tableName: string): Promise<boolean> => {
   try {
-    // Try to get the schema information using rpc instead of _metadata
-    const { error } = await supabase
-      .rpc('test_table_exists', { table_name: tableName });
+    // Try to get schema information
+    const { data, error } = await supabase
+      .from('bot_flows')
+      .select('*')
+      .limit(1);
 
-    // If there's an error like "relation does not exist" or function doesn't exist, the table probably doesn't exist
     if (error) {
       console.info(`Table '${tableName}' might not exist: ${error.message}`);
       return false;
@@ -300,4 +301,3 @@ export const updateLeadInSupabase = async (lead: Lead): Promise<boolean> => {
     return false;
   }
 };
-

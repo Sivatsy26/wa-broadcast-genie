@@ -31,7 +31,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Users, FileSpreadsheet, Phone, Mail, Calendar, MapPin, Building, Flag, Note } from "lucide-react";
+import { Plus, Search, Users, FileSpreadsheet, Phone, Mail, Calendar, MapPin, Building, Flag } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 import CustomerDetailsModal from "@/components/CustomerDetailsModal";
@@ -100,6 +100,14 @@ const LeadsCRM = () => {
     status: 'new',
     plan: 'starter',
     referredBy: '',
+    avatar: '',
+    street: '',
+    district: '',
+    state: '',
+    postalCode: '',
+    country: '',
+    nextFollowUp: '',
+    customerId: '',
   });
 
   // State for customer details modal
@@ -182,10 +190,11 @@ const LeadsCRM = () => {
   useEffect(() => {
     const initializeApp = async () => {
       console.info('Checking if leads table exists...');
-      await createTableIfNotExists('leads', {
+      await createTableIfNotExists('bot_flows', {
         id: 'uuid primary key',
         name: 'text not null',
-        company: 'text',
+        keywords: 'text[]',
+        flow_data: 'jsonb',
         // Add other fields as needed
       });
 
@@ -291,6 +300,14 @@ const LeadsCRM = () => {
         status: 'new',
         plan: 'starter',
         referredBy: '',
+        avatar: '',
+        street: '',
+        district: '',
+        state: '',
+        postalCode: '',
+        country: '',
+        nextFollowUp: '',
+        customerId: '',
       });
       setAddDialogOpen(false);
     } catch (error) {
@@ -579,6 +596,12 @@ const LeadsCRM = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <ImageUpload 
+              value={formData.avatar}
+              onChange={(value) => handleSelectChange('avatar', value)}
+              className="mb-4"
+            />
+            
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 Name
@@ -591,6 +614,7 @@ const LeadsCRM = () => {
                 className="col-span-3"
               />
             </div>
+            
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="company" className="text-right">
                 Company
@@ -603,6 +627,7 @@ const LeadsCRM = () => {
                 className="col-span-3"
               />
             </div>
+            
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">
                 Email
@@ -616,18 +641,16 @@ const LeadsCRM = () => {
                 className="col-span-3"
               />
             </div>
+            
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="phone" className="text-right">
                 Phone
               </Label>
-              <div className="col-span-3 flex">
-                <div className="w-20 mr-2">
-                  <Input
-                    id="phoneCountry"
-                    name="phoneCountry"
+              <div className="col-span-3 flex gap-2">
+                <div className="w-24">
+                  <CountryCodeSelect
                     value={formData.phoneCountry}
-                    onChange={handleInputChange}
-                    placeholder="1"
+                    onValueChange={(value) => handleSelectChange('phoneCountry', value)}
                   />
                 </div>
                 <Input
@@ -639,6 +662,20 @@ const LeadsCRM = () => {
                 />
               </div>
             </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="street" className="text-right">
+                Street
+              </Label>
+              <Input
+                id="street"
+                name="street"
+                value={formData.street}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="city" className="text-right">
                 City
@@ -647,6 +684,58 @@ const LeadsCRM = () => {
                 id="city"
                 name="city"
                 value={formData.city}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="district" className="text-right">
+                District
+              </Label>
+              <Input
+                id="district"
+                name="district"
+                value={formData.district}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="state" className="text-right">
+                State
+              </Label>
+              <Input
+                id="state"
+                name="state"
+                value={formData.state}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="postalCode" className="text-right">
+                Postal Code
+              </Label>
+              <Input
+                id="postalCode"
+                name="postalCode"
+                value={formData.postalCode}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="country" className="text-right">
+                Country
+              </Label>
+              <Input
+                id="country"
+                name="country"
+                value={formData.country}
                 onChange={handleInputChange}
                 className="col-span-3"
               />
@@ -675,6 +764,7 @@ const LeadsCRM = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">
                     Status
@@ -695,6 +785,7 @@ const LeadsCRM = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="assignedTo" className="text-right">
                     Assigned To
@@ -714,11 +805,38 @@ const LeadsCRM = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="nextFollowUp" className="text-right">
+                    Next Follow-up
+                  </Label>
+                  <Input
+                    id="nextFollowUp"
+                    name="nextFollowUp"
+                    type="date"
+                    value={formData.nextFollowUp?.split('T')[0] || ''}
+                    onChange={handleInputChange}
+                    className="col-span-3"
+                  />
+                </div>
               </>
             )}
 
             {activeTab === "clients" && (
               <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="customerId" className="text-right">
+                    Customer ID
+                  </Label>
+                  <Input
+                    id="customerId"
+                    name="customerId"
+                    value={formData.customerId || `CLIENT${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`}
+                    onChange={handleInputChange}
+                    className="col-span-3"
+                  />
+                </div>
+                
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="plan" className="text-right">
                     Plan
@@ -737,6 +855,7 @@ const LeadsCRM = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="referredBy" className="text-right">
                     Referred By
@@ -749,9 +868,53 @@ const LeadsCRM = () => {
                     className="col-span-3"
                   />
                 </div>
+                
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="joinDate" className="text-right">
+                    Join Date
+                  </Label>
+                  <Input
+                    id="joinDate"
+                    name="joinDate"
+                    type="date"
+                    value={formData.joinDate?.split('T')[0] || new Date().toISOString().split('T')[0]}
+                    onChange={handleInputChange}
+                    className="col-span-3"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="renewalDate" className="text-right">
+                    Renewal Date
+                  </Label>
+                  <Input
+                    id="renewalDate"
+                    name="renewalDate"
+                    type="date"
+                    value={formData.renewalDate?.split('T')[0] || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                    onChange={handleInputChange}
+                    className="col-span-3"
+                  />
+                </div>
               </>
             )}
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="notes" className="text-right">
+                Notes
+              </Label>
+              <div className="col-span-3">
+                <Textarea
+                  id="notes"
+                  name="notes"
+                  value={formData.notes || ""}
+                  onChange={(e) => handleSelectChange('notes', e.target.value)}
+                  placeholder="Add notes here..."
+                />
+              </div>
+            </div>
           </div>
+          
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddDialogOpen(false)}>Cancel</Button>
             <Button type="submit" onClick={handleAddCustomer}>Add {activeTab === "leads" ? "Lead" : "Client"}</Button>
