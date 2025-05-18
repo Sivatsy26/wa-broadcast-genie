@@ -2,29 +2,29 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Define the basic database types for better type safety
+interface GenericTable {
+  [key: string]: any;
+}
+
 /**
  * Create a more flexible type-safe wrapper for Supabase operations
  */
 export const safeSupabaseTable = (tableName: string) => {
   return {
     select: (columns: string = '*') => {
-      // @ts-ignore - Bypass type constraints for dynamic table access
       return supabase.from(tableName).select(columns);
     },
     insert: (values: any) => {
-      // @ts-ignore - Bypass type constraints for dynamic table access
       return supabase.from(tableName).insert(values);
     },
     update: (values: any) => {
-      // @ts-ignore - Bypass type constraints for dynamic table access
       return supabase.from(tableName).update(values);
     },
     upsert: (values: any) => {
-      // @ts-ignore - Bypass type constraints for dynamic table access
       return supabase.from(tableName).upsert(values);
     },
     delete: () => {
-      // @ts-ignore - Bypass type constraints for dynamic table access
       return supabase.from(tableName).delete();
     }
   };
@@ -36,7 +36,6 @@ export const safeSupabaseTable = (tableName: string) => {
 export const checkTableExists = async (tableName: string): Promise<boolean> => {
   try {
     // Try to get schema information
-    // @ts-ignore - Bypass type constraints for dynamic table access
     const { data, error } = await supabase.from(tableName).select().limit(1);
 
     if (error) {
@@ -88,12 +87,10 @@ export const getTableData = async <T>(
   try {
     await ensureTableExists(tableName);
     
-    // @ts-ignore - Bypass type constraints for dynamic table access
     let queryBuilder = supabase.from(tableName).select('*');
     
     // Apply filters if any are provided
     Object.entries(query).forEach(([key, value]) => {
-      // @ts-ignore - Dynamic operations
       queryBuilder = queryBuilder.eq(key, value);
     });
     
@@ -109,4 +106,28 @@ export const getTableData = async <T>(
     console.error(`Error in getTableData for ${tableName}:`, error);
     return fallbackData;
   }
+};
+
+// Function to subscribe to real-time updates for a table
+export const subscribeToTable = (
+  tableName: string, 
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE' | '*' = '*', 
+  callback: (payload: any) => void
+) => {
+  const channel = supabase
+    .channel('table-db-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: eventType,
+        schema: 'public',
+        table: tableName
+      },
+      callback
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 };

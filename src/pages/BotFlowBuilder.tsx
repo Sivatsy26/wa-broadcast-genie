@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ReactFlow,
@@ -10,6 +11,7 @@ import {
   Node,
   Edge,
   useReactFlow,
+  BackgroundVariant
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Input } from "@/components/ui/input";
@@ -43,8 +45,8 @@ import { Save, Upload, Download } from 'lucide-react';
 // Helper functions
 import { downloadAsJson, uploadFromJson } from '@/utils/flowUtils';
 
-// Import our new helper
-import { safeSupabaseTable, getTableData, ensureTableExists } from "@/utils/supabaseHelpers";
+// Import our helpers
+import { safeSupabaseTable, getTableData, ensureTableExists, subscribeToTable } from "@/utils/supabaseHelpers";
 
 interface FlowData {
   id: string;
@@ -153,6 +155,30 @@ const BotFlowBuilder = () => {
 
   useEffect(() => {
     loadUserFlows();
+
+    // Subscribe to real-time updates
+    const unsubscribe = subscribeToTable('bot_flows', '*', (payload) => {
+      console.log('Real-time update received:', payload);
+      
+      // Refresh the list of flows when there's a change
+      loadUserFlows();
+      
+      // Show a toast notification for the real-time update
+      const eventType = payload.eventType;
+      const flowName = payload.new?.name || payload.old?.name || 'Unknown';
+      
+      if (eventType === 'INSERT') {
+        toast.info(`New flow "${flowName}" was created`);
+      } else if (eventType === 'UPDATE') {
+        toast.info(`Flow "${flowName}" was updated`);
+      } else if (eventType === 'DELETE') {
+        toast.info(`Flow "${flowName}" was deleted`);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const loadFlow = async (flowId: string) => {
@@ -318,30 +344,30 @@ const BotFlowBuilder = () => {
           ))}
         </div>
 
-				{/* Platform Selection */}
-				<div className="flex items-center space-x-2">
-					<Label className="flex items-center space-x-2">
-						<Switch
-							checked={selectedPlatforms.includes('whatsapp')}
-							onCheckedChange={() => handlePlatformChange('whatsapp')}
-						/>
-						<span>WhatsApp</span>
-					</Label>
-					<Label className="flex items-center space-x-2">
-						<Switch
-							checked={selectedPlatforms.includes('instagram')}
-							onCheckedChange={() => handlePlatformChange('instagram')}
-						/>
-						<span>Instagram</span>
-					</Label>
-					<Label className="flex items-center space-x-2">
-						<Switch
-							checked={selectedPlatforms.includes('telegram')}
-							onCheckedChange={() => handlePlatformChange('telegram')}
-						/>
-						<span>Telegram</span>
-					</Label>
-				</div>
+        {/* Platform Selection */}
+        <div className="flex items-center space-x-2">
+          <Label className="flex items-center space-x-2">
+            <Switch
+              checked={selectedPlatforms.includes('whatsapp')}
+              onCheckedChange={() => handlePlatformChange('whatsapp')}
+            />
+            <span>WhatsApp</span>
+          </Label>
+          <Label className="flex items-center space-x-2">
+            <Switch
+              checked={selectedPlatforms.includes('instagram')}
+              onCheckedChange={() => handlePlatformChange('instagram')}
+            />
+            <span>Instagram</span>
+          </Label>
+          <Label className="flex items-center space-x-2">
+            <Switch
+              checked={selectedPlatforms.includes('telegram')}
+              onCheckedChange={() => handlePlatformChange('telegram')}
+            />
+            <span>Telegram</span>
+          </Label>
+        </div>
 
         <Button onClick={saveFlow}><Save className="mr-2 h-4 w-4" /> Save Flow</Button>
         <Button onClick={updateFlow}>Update Flow</Button>
@@ -382,7 +408,7 @@ const BotFlowBuilder = () => {
         >
           <Controls />
           <MiniMap />
-          <Background variant="dots" gap={12} size={1} />
+          <Background variant={("dots" as BackgroundVariant)} gap={12} size={1} />
         </ReactFlow>
       </div>
 

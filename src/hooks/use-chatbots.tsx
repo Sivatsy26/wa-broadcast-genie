@@ -19,6 +19,7 @@ import {
   type ChatbotAnalyticsData
 } from '@/services/chatbotService';
 import { useToast } from '@/hooks/use-toast';
+import { subscribeToTable } from '@/utils/supabaseHelpers';
 
 export const useChatbots = () => {
   const queryClient = useQueryClient();
@@ -34,6 +35,42 @@ export const useChatbots = () => {
     queryKey: ['chatbots'],
     queryFn: fetchChatbots,
   });
+
+  // Subscribe to real-time updates for chatbots
+  useEffect(() => {
+    // Set up real-time subscription
+    const unsubscribe = subscribeToTable('chatbots', '*', (payload) => {
+      console.log('Real-time chatbot update received:', payload);
+      
+      // Refresh the query cache when there's a change
+      queryClient.invalidateQueries({ queryKey: ['chatbots'] });
+      
+      // Show a toast notification for the real-time update
+      const eventType = payload.eventType;
+      const chatbotName = payload.new?.name || payload.old?.name || 'Unknown';
+      
+      if (eventType === 'INSERT') {
+        toast({
+          title: "New chatbot created",
+          description: `"${chatbotName}" was added by another user`
+        });
+      } else if (eventType === 'UPDATE') {
+        toast({
+          title: "Chatbot updated",
+          description: `"${chatbotName}" was updated`
+        });
+      } else if (eventType === 'DELETE') {
+        toast({
+          title: "Chatbot deleted",
+          description: `"${chatbotName}" was deleted`
+        });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [queryClient, toast]);
 
   // Fetch single chatbot
   const fetchSingleChatbot = (id: string) => {
@@ -106,13 +143,30 @@ export const useChatbots = () => {
     }
   });
 
-  // Fetch chatbot responses
+  // Fetch chatbot responses with real-time updates
   const fetchChatbotResponsesQuery = (chatbotId: string) => {
-    return useQuery({
+    const responseQuery = useQuery({
       queryKey: ['chatbot-responses', chatbotId],
       queryFn: () => fetchChatbotResponses(chatbotId),
       enabled: !!chatbotId
     });
+    
+    useEffect(() => {
+      if (!chatbotId) return;
+      
+      // Set up real-time subscription for responses
+      const unsubscribe = subscribeToTable('chatbot_responses', '*', (payload) => {
+        if (payload.new?.chatbot_id === chatbotId || payload.old?.chatbot_id === chatbotId) {
+          queryClient.invalidateQueries({ queryKey: ['chatbot-responses', chatbotId] });
+        }
+      });
+      
+      return () => {
+        unsubscribe();
+      };
+    }, [chatbotId]);
+    
+    return responseQuery;
   };
 
   // Create chatbot response

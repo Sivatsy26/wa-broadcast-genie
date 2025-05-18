@@ -45,6 +45,7 @@ import {
   deleteClientFromSupabase,
   updateLeadInSupabase
 } from "@/utils/supabaseUtils";
+import { subscribeToTable } from "@/utils/supabaseHelpers";
 import { Lead, Client } from "@/types/customer"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -187,6 +188,48 @@ const LeadsCRM = () => {
     };
 
     initializeApp();
+
+    // Subscribe to real-time updates for leads and clients
+    const leadsUnsubscribe = subscribeToTable('bot_flows', '*', (payload) => {
+      // Only refresh if it's a lead-related update (check keywords)
+      if ((payload.new && Array.isArray(payload.new.keywords) && payload.new.keywords.includes('lead')) || 
+          (payload.old && Array.isArray(payload.old.keywords) && payload.old.keywords.includes('lead'))) {
+        console.log('Real-time lead update received:', payload);
+        fetchData();
+        
+        // Show toast notification
+        if (payload.eventType === 'INSERT') {
+          toast.info('New lead added');
+        } else if (payload.eventType === 'UPDATE') {
+          toast.info('Lead updated');
+        } else if (payload.eventType === 'DELETE') {
+          toast.info('Lead removed');
+        }
+      }
+    });
+    
+    const clientsUnsubscribe = subscribeToTable('bot_flows', '*', (payload) => {
+      // Only refresh if it's a client-related update (check keywords)
+      if ((payload.new && Array.isArray(payload.new.keywords) && payload.new.keywords.includes('client')) || 
+          (payload.old && Array.isArray(payload.old.keywords) && payload.old.keywords.includes('client'))) {
+        console.log('Real-time client update received:', payload);
+        fetchData();
+        
+        // Show toast notification
+        if (payload.eventType === 'INSERT') {
+          toast.info('New client added');
+        } else if (payload.eventType === 'UPDATE') {
+          toast.info('Client updated');
+        } else if (payload.eventType === 'DELETE') {
+          toast.info('Client removed');
+        }
+      }
+    });
+
+    return () => {
+      leadsUnsubscribe();
+      clientsUnsubscribe();
+    };
   }, []);
 
   const fetchData = async () => {
